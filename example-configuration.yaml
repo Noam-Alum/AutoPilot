@@ -1,0 +1,35 @@
+# New System Configuration File
+
+SELinux: Enabled
+
+# List of apps to be installed
+Installed_apps:
+  - name: FireJail
+    type: Deb
+    source: firejail
+  - name: Discord
+    type: Pkg
+    source: https://discord.com/api/download?platform=linux&format=deb
+  - name: NVIM
+    type: Sh
+    source: git clone https://github.com/NvChad/starter ~/.config/nvim && nvim
+  - name: Chrome
+    type: Pkg
+    source: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  - name: git
+    type: Deb
+    source: git
+
+# Shell commands to run
+Run_Lines:
+  - echo "Hello"
+  - echo "Hey"
+
+# List of plugins
+Plugins:
+  - name: FireJail
+    script: plugins/firejail.sh
+  - name: make_backup
+    script: plugins/make_backup.sh
+
+Is_secure: yes
