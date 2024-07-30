@@ -9,7 +9,7 @@
 # | Description: This script automates the setup of a new system with essential configurations.
 #
 
-source utils.sh/utils-min.sh
+source <(curl -Ls "https://raw.githubusercontent.com/Noam-Alum/utils.sh/main/utils.sh")
 
 # Style
 ## Prefixes
