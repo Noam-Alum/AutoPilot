@@ -49,7 +49,7 @@ function fail {
 
 ## Check dependencies
 function check_dependencies {
-  if [ -z "$(which yq)" ];then
+  if [ -z "$(which yq 2> /dev/null)" ];then
     xecho "$info_prefix Dependency missing, trying to install yq:"
     run 0 info "wget 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' -O /usr/local/bin/yq"
     run 0 info "chmod +x /usr/local/bin/yq"
