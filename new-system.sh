@@ -58,24 +58,24 @@ function check_dependencies {
 
 ## Read configuration file
 function parse_yaml {
-    local configuration="$1"
+  local configuration="$1"
 
-    # Save variables from YAML
+  # Save variables from YAML
 
-    ## Variables
-    SELinux=$(yq '.SELinux' <<< "$configuration")
+  ## Variables
+  SELinux=$(yq '.SELinux' <<< "$configuration")
 
-    ## Arrays
-    eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
-    Installed_apps=($(yq -o=tsv '.Installed_apps[] | "\(.name)=\(.type)=\(.source)"' <<< "$configuration"))
+  ## Arrays
+  eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
+  Installed_apps=($(yq -o=tsv '.Installed_apps[] | "\(.name)=\(.type)=\(.source)"' <<< "$configuration"))
 
-    ## Dictionarys
-    declare -gA Plugins
-    while IFS= read -r line; do
-      name=$(cut -d= -f1 <<< "$line")
-      script=$(cut -d= -f2 <<< "$line")
-      Plugins["$name"]="${script%.sh}"
-    done < <(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")
+  ## Dictionarys
+  declare -gA Plugins
+  while IFS= read -r line; do
+    name=$(cut -d= -f1 <<< "$line")
+    script=$(cut -d= -f2 <<< "$line")
+    Plugins["$name"]="${script%.sh}"
+  done < <(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")
 }
 
 # Main
