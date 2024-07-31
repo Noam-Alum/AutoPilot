@@ -14,6 +14,7 @@ source <(curl -Ls "https://raw.githubusercontent.com/Noam-Alum/utils.sh/main/uti
 # Style
 ## Prefixes
 good_prefix=" <biw>{{ B-arrow }}</biw> <big>|</big>"
+notgood_prefix=" <biw>{{ B-arrow }}</biw> <biy>|</biy>"
 error_prefix=" <biw>{{ B-arrow }}</biw> <bir>|</bir>"
 info_prefix=" <biw>{{ B-arrow }}</biw> <biw>|</biw>"
 
@@ -36,23 +37,30 @@ uc_ifc_posfix="<big>yes {{ E-success }}</big>|<bir>no {{ E-fail }}</bir> | "
 uc_gr_len=14
 
 ### run
-uc_rn_inf_msg="$good_prefix Executed <on_b><bw> {[ rn_cmd ]} </on_b></bw> successfully <big>{{ E-success }}</big>."
-uc_rn_err_msg="$error_prefix Error while executing <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-bear }}\n    <bw>Error:</bw>\n{{ BR-bear }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-bear }}"
+uc_rn_inf_msg="$good_prefix <biw>Executed</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> <biw>successfully</biw> <big>{{ E-success }}</big>."
+uc_rn_err_msg="$error_prefix <biw>Error while executing</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-bear }}\n    <biw>Error:</biw>\n{{ BR-bear }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-bear }}"
 
 # Functions
 
 ## Fail
 function fail {
   xecho "$error_prefix $2 <bir>{{ E-fail }}</bir>"
-  test -z "$1" && exit $1
+  exit $1 
 }
 
 ## Check dependencies
 function check_dependencies {
-  if [ -z "$(which yq 2> /dev/null)" ];then
-    xecho "$info_prefix Dependency missing, trying to install yq:"
-    run 0 info "wget 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' -O /usr/local/bin/yq"
-    run 0 info "chmod +x /usr/local/bin/yq"
+  if [ -z "$1" ]; then
+    if [ -z "$(which yq 2> /dev/null)" ];then
+      xecho "$notgood_prefix Dependency missing, trying to install yq:"
+      run 0 info "wget 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' -O /usr/local/bin/yq"
+      run 0 info "chmod +x /usr/local/bin/yq"
+    fi
+  else
+    install_msg="$1"
+    install_cmd="$2"
+    xecho "$notgood_prefix <biw>$install_msg</biw>"
+    run 0 info "$install_cmd"
   fi
 }
 
@@ -79,8 +87,10 @@ function parse_yaml {
 }
 
 # Main
-
 xecho "$banner"
+
+## Check if the script is run as root
+test "$UID" -ne 0 && fail 1 "Script must be run as root, exiting."
 
 ## Check dependencies
 check_dependencies
@@ -91,22 +101,24 @@ test -z "$conf_file" && user_input conf_file "txt" "$info_prefix What configurat
 test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 parse_yaml "$configuration"
 
-## Test parsing
-xecho "<biw>{{ BR-scissors }} Debug {{ BR-scissors }}</biw>\n\n<on_w><bib>SELinux:</bib></on_w>\n\n  $SELinux\n"
-xecho "<on_w><bib>Run_Lines:</bib></on_w>\n"
-for cmd in "${Run_Lines[@]}"; do
-  echo -e "  $cmd\n"
-done
-xecho "<on_w><bib>Installed_apps:</bib></on_w>\n"
-for app in "${Installed_apps[@]}"; do
-  name=$(echo "$app" | cut -d= -f1)
-  type=$(echo "$app" | cut -d= -f2)
-  source=$(echo "$app" | cut -d= -f3)
-  echo -e "  Name: $name\n  Type: $type\n  Source: $source\n"
-done
-xecho "<on_w><bib>Plugins:</bib></on_w>\n"
-for plugin in ${!Plugins[@]}
-do
-  echo -e "  $plugin: ${Plugins[$plugin]}\n"
-done
-xecho "<biw>{{ BR-scissors }} Debug {{ BR-scissors }}</biw>"
+### SELinux
+if [ ! -z "$SELinux" ]; then
+  if [ "$SELinux" == "Enabled" ]; then
+    xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
+
+    if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
+      check_dependencies "SELinux not found, tring to install, be patient. {{ E-angry }}" "apt -y install selinux-basics selinux-policy-default"
+    fi
+
+    sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
+    grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
+  elif [ "$SELinux" == "Disabled" ]; then
+    xecho "$info_prefix <biw>Trying to disable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
+    if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
+      xecho "$good_prefix <biw>SELinux is not installed, no need to disable {{ E-smile }}</biw>"
+    else
+      sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
+      grep "SELINUX=disabled" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux disabled successfully. {{ E-smile }}</biw>"
+    fi
+  fi
+fi
