@@ -1,6 +1,6 @@
 # New System Configuration File
 
-SELinux: Disableds
+SELinux: Disabled
 
 # List of apps to be installed
 Installed_apps:
@@ -9,7 +9,7 @@ Installed_apps:
     source: firejail
   - name: Discord
     type: Pkg
-    source: https://discord.com/api/download?platform=linux&format=deb
+    source: "https://discord.com/api/download?platform=linux&format=deb"
   - name: NVIM
     type: Sh
     source: "https://docs.alum.sh/files/NVIM-install.sh"
@@ -23,13 +23,11 @@ Installed_apps:
 # Shell commands to run
 Run_Lines:
   - echo "Hello"
-  - echo "Hey"
+  - echo "Hello world"
 
 # List of plugins
 Plugins:
   - name: FireJail
-    script: plugins/firejail.sh
+    script: plugins/firejail
   - name: make_backup
-    script: plugins/make_backup.sh
-
-Is_secure: yes
+    script: plugins/make_backup
