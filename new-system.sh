@@ -72,6 +72,9 @@ function parse_yaml {
 
   ## Variables
   SELinux=$(yq '.SELinux' <<< "$configuration")
+  if [[ ! "$SELinux" =~ ^(Enabled|Disabled)$ ]]; then
+    xecho "$notgood_prefix Warning, SELinux directive cannot evaluate to \"$SELinux\", skipping."
+  fi
 
   ## Arrays
   eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
