@@ -73,7 +73,7 @@ function parse_yaml {
   ## Variables
   SELinux=$(yq '.SELinux' <<< "$configuration")
   if [[ ! "$SELinux" =~ ^(Enabled|Disabled)$ ]]; then
-    xecho "$notgood_prefix Warning, SELinux directive cannot evaluate to \"$SELinux\", skipping."
+    xecho "$notgood_prefix <biw>Warning, \"SELinux\" directive cannot evaluate to \"$SELinux\", skipping.</biw>"
   fi
 
   ## Arrays
@@ -105,23 +105,19 @@ test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configurati
 parse_yaml "$configuration"
 
 ### SELinux
-if [ ! -z "$SELinux" ]; then
-  if [ "$SELinux" == "Enabled" ]; then
-    xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
-
-    if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
-      check_dependencies "SELinux not found, tring to install, be patient. {{ E-angry }}" "apt -y install selinux-basics selinux-policy-default"
-    fi
-
-    sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
-    grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
-  elif [ "$SELinux" == "Disabled" ]; then
-    xecho "$info_prefix <biw>Trying to disable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
-    if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
-      xecho "$good_prefix <biw>SELinux is not installed, no need to disable {{ E-smile }}</biw>"
-    else
-      sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
-      grep "SELINUX=disabled" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux disabled successfully. {{ E-smile }}</biw>"
-    fi
+if [ "$SELinux" == "Enabled" ]; then
+  xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
+  if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
+    check_dependencies "SELinux not found, tring to install, be patient. {{ E-angry }}" "apt -y install selinux-basics selinux-policy-default"
+  fi
+  sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
+  grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
+elif [ "$SELinux" == "Disabled" ]; then
+  xecho "$info_prefix <biw>Trying to disable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
+  if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
+    xecho "$good_prefix <biw>SELinux is not installed, no need to disable {{ E-smile }}</biw>"
+  else
+    sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
+    grep "SELINUX=disabled" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux disabled successfully. {{ E-smile }}</biw>"
   fi
 fi

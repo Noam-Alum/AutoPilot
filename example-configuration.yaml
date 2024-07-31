@@ -1,6 +1,6 @@
 # New System Configuration File
 
-SELinux: Disabled
+SELinux: Disableds
 
 # List of apps to be installed
 Installed_apps:
