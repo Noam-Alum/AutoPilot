@@ -52,11 +52,11 @@ The Configuration file is written in YAML, and can contain the following directi
     ```yaml
     Plugins:
       - name: AnyName
-        script: path/to/plugin/
+        script: path/to/plugin/run.sh
     ```
   - Example:
     ```yaml
     Plugins:
       - name: make_backup
-        script: plugins/make_backup/install.sh
+        script: plugins/make_backup/run.sh
     ```
