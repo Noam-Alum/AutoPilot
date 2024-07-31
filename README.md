@@ -5,9 +5,58 @@
 
 The Configuration file is written in YAML, and can contain the following directives:
 
-| **Directive**      | **Explenation**                                   | **Values**                                                                                              | **Example**                                                                                                                                                                                                                                                                                                                          |
-|--------------------|---------------------------------------------------|---------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **SELinux**        | Whether SELinux is enabled or not.                | `Enabled`, `Disabled`                                                                                   | ```yaml<br>SELinux: Enabled<br>```                                                                                                                                                                                                                                                                                                   |
-| **Run_Lines**      | When running the script, run the following lines. | Anything                                                                                                | ```yaml<br>Run_Lines:<br>  - echo "Hello"<br>  - echo "Hey"<br>```                                                                                                                                                                                                                                                                   |
-| **Installed_apps** | Which apps to install and how.                    | - name: **AnyName**<br>  type: `Deb`/`Pkg`/`Sh`<br>  source: `Deb name`/`Package url`/`Installation script url` | ```yaml<br>Installed_apps:<br>  - name: FireJail<br>    type: Deb<br>    source: firejail<br>  - name: Discord<br>    type: Pkg<br>    source: https://discord.com/api/download?platform=linux&format=deb<br>  - name: NVIM<br>    type: Sh<br>    source: https://docs.alum.sh/files/NVIM-install.sh<br>``` |
-| **Plugins**        | Which plugins to use and their location.          | Plugins:<br>  - name: **AnyName**<br>    script: `path/to/plugin/`                                      | ```yaml<br>- name: make_backup<br>	script: plugins/make_backup/install.sh<br>```                                                                                                                                                                                                                                                     |
+* **SELinux:**
+  - Whether SELinux is enabled or not.
+  - Values: `Enabled`, `Disabled`
+  - Example:
+    ```yaml
+    SELinux: Enabled
+    ```
+
+* **Run_Lines:**
+  - When running the script, run the following lines.
+  - Values: Anything
+  - Example:
+    ```yaml
+    Run_Lines:
+      - echo "Hello"
+      - echo "Hey"
+    ```
+
+* **Installed_apps:**
+  - Which apps to install and how.
+  - Format:
+    ```yaml
+    Installed_apps:
+      - name: AnyName
+        type: Deb/Pkg/Sh
+        source: Deb name/Package url/Commands to run
+    ```
+  - Example:
+    ```yaml
+    Installed_apps:
+      - name: FireJail
+        type: Deb
+        source: firejail
+      - name: Discord
+        type: Pkg
+        source: https://discord.com/api/download?platform=linux&format=deb
+      - name: NVIM
+        type: Sh
+        source: git clone https://github.com/NvChad/starter ~/.config/nvim && nvim
+    ```
+
+* **Plugins:**
+  - Which plugins to use and their location.
+  - Format:
+    ```yaml
+    Plugins:
+      - name: AnyName
+        script: path/to/plugin/
+    ```
+  - Example:
+    ```yaml
+    Plugins:
+      - name: make_backup
+        script: plugins/make_backup/install.sh
+    ```
