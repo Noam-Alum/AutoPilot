@@ -38,7 +38,7 @@ uc_gr_len=14
 
 ### run
 uc_rn_inf_msg="$good_prefix <biw>Executed</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> <biw>successfully</biw> <big>{{ E-success }}</big>."
-uc_rn_err_msg="$error_prefix <biw>Error while executing</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-bear }}\n    <biw>Error:</biw>\n{{ BR-bear }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-bear }}"
+uc_rn_err_msg="$error_prefix <biw>Error while executing</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-specialdots }}\n    <biw>Error:</biw>\n{{ BR-specialdots }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-specialdots }}"
 
 # Functions
 
@@ -129,7 +129,7 @@ elif [ "$SELinux" == "Disabled" ]; then
 fi
 
 ### Install apps
-if [ "$Installed_apps" != "==" ]; then
+if [ "$Installed_apps" != ",," ]; then
   for app in "${Installed_apps[@]}"
   do
     app_name=$(awk -F, {'print $1'} <<< "$app")
