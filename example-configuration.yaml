@@ -12,7 +12,7 @@ Installed_apps:
     source: https://discord.com/api/download?platform=linux&format=deb
   - name: NVIM
     type: Sh
-    source: git clone https://github.com/NvChad/starter ~/.config/nvim && nvim
+    source: "https://docs.alum.sh/files/NVIM-install.sh"
   - name: Chrome
     type: Pkg
     source: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb

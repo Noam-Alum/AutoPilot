@@ -37,7 +37,7 @@ uc_gr_len=14
 
 ### run
 uc_rn_inf_msg="$good_prefix Executed <on_b><bw> {[ rn_cmd ]} </on_b></bw> successfully <big>{{ E-success }}</big>."
-uc_rn_err_msg="$error_prefix Error while executing <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-heart }}\n    <bw>Error:</bw>\n{{ BR-heart }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-heart }}"
+uc_rn_err_msg="$error_prefix Error while executing <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-bear }}\n    <bw>Error:</bw>\n{{ BR-bear }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-bear }}"
 
 # Functions
 
@@ -56,16 +56,27 @@ function check_dependencies {
   fi
 }
 
-
 ## Read configuration file
-parse_yaml() {
+function parse_yaml {
     local configuration="$1"
 
     # Save variables from YAML
-    Is_secure=$(yq '.Is_secure' <<< "$configuration")
-}
 
-### TO DO
+    ## Variables
+    SELinux=$(yq '.SELinux' <<< "$configuration")
+
+    ## Arrays
+    eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
+    Installed_apps=($(yq -o=tsv '.Installed_apps[] | "\(.name)=\(.type)=\(.source)"' <<< "$configuration"))
+
+    ## Dictionarys
+    declare -gA Plugins
+    while IFS= read -r line; do
+      name=$(cut -d= -f1 <<< "$line")
+      script=$(cut -d= -f2 <<< "$line")
+      Plugins["$name"]="${script%.sh}"
+    done < <(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")
+}
 
 # Main
 
@@ -80,4 +91,22 @@ test -z "$conf_file" && user_input conf_file "txt" "$info_prefix What configurat
 test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 parse_yaml "$configuration"
 
-echo "$Is_secure"
+## Test parsing
+xecho "<biw>{{ BR-scissors }} Debug {{ BR-scissors }}</biw>\n\n<on_w><bib>SELinux:</bib></on_w>\n\n  $SELinux\n"
+xecho "<on_w><bib>Run_Lines:</bib></on_w>\n"
+for cmd in "${Run_Lines[@]}"; do
+  echo -e "  $cmd\n"
+done
+xecho "<on_w><bib>Installed_apps:</bib></on_w>\n"
+for app in "${Installed_apps[@]}"; do
+  name=$(echo "$app" | cut -d= -f1)
+  type=$(echo "$app" | cut -d= -f2)
+  source=$(echo "$app" | cut -d= -f3)
+  echo -e "  Name: $name\n  Type: $type\n  Source: $source\n"
+done
+xecho "<on_w><bib>Plugins:</bib></on_w>\n"
+for plugin in ${!Plugins[@]}
+do
+  echo -e "  $plugin: ${Plugins[$plugin]}\n"
+done
+xecho "<biw>{{ BR-scissors }} Debug {{ BR-scissors }}</biw>"
