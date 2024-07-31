@@ -14,7 +14,7 @@ The Configuration file is written in YAML, and can contain the following directi
     ```
 
 * **Run_Lines:**
-  - When running the script, run the following lines. (Try each line small, for big shell access consider creating a plugin)
+  - When running the script, run the following lines. (Try to keep each line small, for big shell access consider creating a plugin)
   - Values: Anything
   - Example:
     ```yaml
