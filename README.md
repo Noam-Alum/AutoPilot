@@ -1,9 +1,71 @@
 # New System
 
+![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)
+![version](https://img.shields.io/static/v1?label=Version&message=1.0.0&color=green?style=plastic)
 
-## Configuration file
+This script automates the setup of a new system with essential configurations.
 
-The Configuration file is written in YAML, and can contain the following directives:
+---
+
+## Installation:
+
+- **Git clone:**
+  ```sh
+  git clone https://github.com/Noam-Alum/new-system.git
+  ```
+
+- **wget:**
+  ```sh
+  wget https://github.com/Noam-Alum/new-system/archive/refs/heads/main.zip
+  unzip main.zip
+  ```
+
+## Usage:
+
+> To use the script you first need to conduct a configuration file.
+
+```sh
+sudo ./new-system.sh configuration.yaml
+```
+
+---
+
+## Configuration
+
+**new-system** uses *YAML* for its configuration file, for example:
+
+```yaml
+SELinux: Disabled
+
+Installed_apps:
+  - name: FireJail
+    type: Deb
+    source: firejail
+  - name: Discord
+    type: Pkg
+    source: "https://discord.com/api/download?platform=linux&format=deb"
+  - name: NVIM
+    type: Sh
+    source: "https://docs.alum.sh/files/NVIM-install.sh"
+  - name: Chrome
+    type: Pkg
+    source: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  - name: git
+    type: Deb
+    source: git
+
+Run_Lines:
+  - echo "Hello"
+  - echo "Hello world"
+
+Plugins:
+  - name: FireJail
+    script: plugins/firejail
+  - name: make_backup
+    script: plugins/make_backup
+```
+
+### Available directives:
 
 * **SELinux:**
   - Whether SELinux is enabled or not.
