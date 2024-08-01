@@ -1,4 +1,4 @@
-# New System
+# <img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Linux-Dark.svg" width="38" style="max-width: 100%;"> New System
 
 ![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)
 ![version](https://img.shields.io/static/v1?label=Version&message=1.0.0&color=green?style=plastic)
@@ -7,7 +7,7 @@ This script automates the setup of a new system with essential configurations.
 
 ---
 
-## Installation:
+##  <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/install-1462529-1238097.png?f=webp&w=256" width="24" style="max-width: 100%;"> Installation:
 
 - **Git clone:**
   ```sh
@@ -20,7 +20,7 @@ This script automates the setup of a new system with essential configurations.
   unzip main.zip
   ```
 
-## Usage:
+## <img src="https://cdn-icons-png.flaticon.com/512/5486/5486152.png" width="26" style="max-width: 100%;"> Usage:
 
 > To use the script you first need to conduct a configuration file.
 
@@ -30,7 +30,7 @@ sudo ./new-system.sh configuration.yaml
 
 ---
 
-## Configuration
+## <img src="https://icons.iconarchive.com/icons/dtafalonso/android-lollipop/256/Settings-icon.png" width="26" style="max-width: 100%;"> Configuration
 
 **new-system** uses *YAML* for its configuration file, for example:
 
