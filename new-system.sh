@@ -38,7 +38,7 @@ uc_gr_len=14
 
 ### run
 uc_rn_inf_msg="$good_prefix <biw>Executed</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> <biw>successfully</biw> <big>{{ E-success }}</big>."
-uc_rn_err_msg="$error_prefix <biw>Error while executing</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> {{ E-angry }}\n{{ BR-specialdots }}\n    <biw>Error:</biw>\n{{ BR-specialdots }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-specialdots }}"
+uc_rn_err_msg="$error_prefix <biw>Error while executing</biw> <on_b><bw> {[ rn_cmd ]} </on_b></bw> <bw>{{ E-angry }}</bw>\n{{ BR-specialdots }}\n    <biw>Error:</biw>\n{{ BR-specialdots }}\n<on_ir><bw> {[ rn_err ]} </bw></on_ir>\n{{ BR-specialdots }}"
 
 # Functions
 
@@ -59,9 +59,16 @@ function check_dependencies {
   else
     install_msg="$1"
     install_cmd="$2"
-    xecho "$notgood_prefix <biw>$install_msg</biw>"
+    xecho "$info_prefix <biw>$install_msg</biw>"
     run 0 info "$install_cmd"
   fi
+}
+
+function check_parsed_var {
+  var_value="$(eval echo "\$$1")" 
+  if [[ ! "$var_value" =~ ^($2)$ ]]; then
+     xecho "$notgood_prefix <biw>Warning, \"$1\" directive cannot evaluate to \"$var_value\", skipping.</biw>"
+  fi 
 }
 
 ## Read configuration file
@@ -71,14 +78,15 @@ function parse_yaml {
   # Save variables from YAML
 
   ## Variables
-  SELinux=$(yq '.SELinux' <<< "$configuration")
-  if [[ ! "$SELinux" =~ ^(Enabled|Disabled)$ ]]; then
-    xecho "$notgood_prefix <biw>Warning, \"SELinux\" directive cannot evaluate to \"$SELinux\", skipping.</biw>"
-  fi
+  SELinux="$(yq '.SELinux' <<< "$configuration")"
+  check_parsed_var "SELinux" "Enabled|Disabled"
+  Document_process="$(yq '.Document_process' <<< "$configuration")"
+  check_parsed_var "Document_process" "Yes|No"
 
   ## Arrays
   eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
   Installed_apps=($(yq -o=tsv '.Installed_apps[] | "\(.name),\(.type),\(.source)"' <<< "$configuration"))
+  User_Pass=($(yq -o=tsv '.Users[] | "\(.pass)"' <<< "$configuration"))
 
   ## Dictionarys
   declare -gA Plugins
@@ -87,6 +95,14 @@ function parse_yaml {
     script=$(cut -d= -f2 <<< "$line")
     Plugins["$name"]="${script%.sh}"
   done < <(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")
+
+  declare -gA Users
+  local ui=0
+  while IFS= read -r user; do
+    name="$user"
+    Users["$name"]="$ui"
+    ui=$(( $ui + 1 ))
+  done < <(yq -o=tsv '.Users[] | "\(.name)=\(.sudo)"' <<< "$configuration")
 }
 
 # Main
@@ -142,7 +158,8 @@ if [ "$Installed_apps" != ",," ]; then
       xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$app_name</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
       case $app_type in
         Deb)
-          check_dependencies "Using dpkg to install \"$app_name\", be patient." "apt -y install $app_source"
+          xecho "$info_prefix <biw>Using apt to install \"$app_name\", be patient.</biw>" 
+          run 0 "info" "apt -y install $app_source"
           ;;
         Pkg)
           xecho "$info_prefix <biw>Fetching package from \"$app_source\".</biw>"
@@ -180,10 +197,28 @@ if [ ! -n "$Plugins" ]; then
         source "${Plugins[$plugin]}/run.sh" &> /dev/null
         run_$plugin
       else
-        xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", could not find function: \"run_$plugin\"."
+        xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", could not find function: \"run_$plugin\".</biw>"
       fi
     else
-      xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", \"${Plugins[$plugin]}/run.sh\" does not exist."
+      xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", \"${Plugins[$plugin]}/run.sh\" does not exist.</biw>"
     fi
   done
 fi
+
+### Users
+for user in "${!Users[@]}"
+do
+  username="$(awk -F= '{print $1}' <<< "$user")"
+  usersudo="$(awk -F= '{print $2}' <<< "$user")"
+  userpass="${User_Pass[${Users[$user]}]}"
+  test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
+  xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
+  if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
+  	run 0 "noinfo" "useradd \"$username\""
+	test "$usersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\"" 	
+  	run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
+	xecho "$good_prefix <biw>Added user \"$username\".</biw>"
+  else
+	xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
+  fi
+done

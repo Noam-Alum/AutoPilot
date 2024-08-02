@@ -1,5 +1,9 @@
 # New System Configuration File
 
+# Document process
+Document_process: Yes
+
+# SELinux status
 SELinux: Disabled
 
 # List of apps to be installed
@@ -15,7 +19,7 @@ Installed_apps:
     source: "https://docs.alum.sh/files/NVIM-install.sh"
   - name: Chrome
     type: Pkg
-    source: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    source: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
   - name: git
     type: Deb
     source: git
@@ -31,3 +35,12 @@ Plugins:
     script: plugins/firejail
   - name: make_backup
     script: plugins/make_backup
+
+# User management
+Users:
+  - name: noam
+    pass: "%Gen%"
+    sudo: yes
+  - name: shay
+    pass: "mL{3_Ajx04,,,.......||||||//3QZ"
+    sudo: no

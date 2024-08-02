@@ -2,9 +2,6 @@
 
 ## Directives
 
-- **User Management**
-  - Create users, set passwords, or configure user permissions.
-
 - **Network Configuration**
   - Configure network settings:
     - Set up static IP addresses
