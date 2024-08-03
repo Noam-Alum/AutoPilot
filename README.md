@@ -67,9 +67,9 @@ Plugins:
 
 ### Available directives:
 
-* **Users:**
+* **Installed_apps:**
   - Add users, set their passwords, and whether they have sudo privileges.<br>
-    Use `%Gen%` to use a generated password.
+    Use `%Gen%` to generate a password.
   - Format:
     ```yaml
     Users:
@@ -77,12 +77,15 @@ Plugins:
       - pass: PASSWORD/%Gen%
       - sudo: Yes/No
     ```
-   - Example:
+  - Example:
     ```yaml
-    Users:
-      - name: Noam
-      - pass: 1234
-      - sudo: Yes 
+      Users:
+        - name: Noam
+        - pass: 1234
+        - sudo: Yes
+        - name: Shay
+        - pass: %Gen%
+        - sudo: No
     ```
 
 * **SELinux:**
