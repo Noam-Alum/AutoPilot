@@ -7,7 +7,7 @@ This script automates the setup of a new system with essential configurations, a
 
 <br>
 
-[![Button Component](https://readme-components.vercel.app/api?component=button&text=Go-to-utils.sh)](examples)
+[![Button Component](https://readme-components.vercel.app/api?component=button&text=Go-to-utils.sh)](https://github.com/Noam-Alum/utils.sh)
 
 ---
 
