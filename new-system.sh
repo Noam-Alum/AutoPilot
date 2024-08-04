@@ -50,17 +50,13 @@ function fail {
 
 ## Check dependencies
 function check_dependencies {
-  if [ -z "$1" ]; then
-    if [ -z "$(which yq 2> /dev/null)" ];then
-      xecho "$notgood_prefix Dependency missing, trying to install yq:"
-      run 0 info "wget 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' -O /usr/local/bin/yq"
-      run 0 info "chmod +x /usr/local/bin/yq"
-    fi
-  else
-    install_msg="$1"
-    install_cmd="$2"
-    xecho "$info_prefix <biw>$install_msg</biw>"
-    run 0 info "$install_cmd"
+  install_app="$1"
+  install_msg="$2"
+  install_cmd="$3"
+  install_check="$4"
+  if [ $($install_check &> /dev/null;echo $?) -ne 0 ];then
+    xecho "$install_msg"
+    run 0 noinfo "$install_cmd" && xecho "$good_prefix <biw>Installed \"$install_app\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$install_app\" {{ E-sad }}</biw>"
   fi
 }
 
@@ -80,8 +76,6 @@ function parse_yaml {
   ## Variables
   SELinux="$(yq '.SELinux' <<< "$configuration")"
   check_parsed_var "SELinux" "Enabled|Disabled"
-  Document_process="$(yq '.Document_process' <<< "$configuration")"
-  check_parsed_var "Document_process" "Yes|No"
 
   ## Arrays
   eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
@@ -112,11 +106,11 @@ xecho "$banner"
 test "$UID" -ne 0 && fail 1 "Script must be run as root, exiting."
 
 ## Check dependencies
-check_dependencies
+check_dependencies "yq" "$notgood_prefix <biw>Dependency missing, trying to install yq.</biw>" "wget 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' -O /usr/local/bin/yq &> /dev/null && chmod +x /usr/local/bin/yq &> /dev/null" "which yq"
 
 ## Get conf file
 conf_file="$1"
-test -z "$conf_file" && user_input conf_file "txt" "$info_prefix What configuration file would you like to use? : "
+test -z "$conf_file" && user_input conf_file "txt" "$info_prefix <biw>What configuration file would you like to use? : </biw>"
 test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 yq_err="$(yq e . "$conf_file" 2>&1 > /dev/null)"
 test -z "$yq_err" || fail 1 "Configuration fail is invaild: <on_b><bir>$yq_err</bir></on_b>"
@@ -129,9 +123,7 @@ run 0 "noinfo" "apt-get update"
 ### SELinux
 if [ "$SELinux" == "Enabled" ]; then
   xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
-  if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
-    check_dependencies "SELinux not found, tring to install, be patient. {{ E-angry }}" "apt -y install selinux-basics selinux-policy-default"
-  fi
+  check_dependencies "SELinux" "$notgood_prefix <biw>SELinux not found, tring to install, be patient. {{ E-angry }}</biw>" "apt -y install selinux-basics selinux-policy-default" "dpkg -L selinux-basics"
   sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
   grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
 elif [ "$SELinux" == "Disabled" ]; then
@@ -159,18 +151,17 @@ if [ "$Installed_apps" != ",," ]; then
       case $app_type in
         Deb)
           xecho "$info_prefix <biw>Using apt to install \"$app_name\", be patient.</biw>" 
-          run 0 "info" "apt -y install $app_source"
+          run 0 "noinfo" "apt -y install $app_source" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
           ;;
         Pkg)
           xecho "$info_prefix <biw>Fetching package from \"$app_source\".</biw>"
           ia_deb_package_name="$(gen_random str)_$app_name.deb"
-          run 0 "info" "curl -sLo /tmp/$ia_deb_package_name $app_source"
-          run 0 "info" "dpkg -i /tmp/$ia_deb_package_name"
-          run 0 "noinfo" "apt-get install -f"
+          run 0 "noinfo" "curl -sLo /tmp/$ia_deb_package_name \"$app_source\" && dpkg -i /tmp/$ia_deb_package_name" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+          run 0 "noinfo" "apt-get install -f -y" && xecho "$info_prefix <biw>Tryed fixing dependency issues (if they exist.)"
           ;;
         Sh)
           xecho "$info_prefix <biw>Running installation script from \"$app_source\".</biw>"
-          run 0 "info" "curl -Ls \"$app_source\" | bash"
+          run 0 "noinfo" "curl -Ls \"$app_source\" | bash" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
           ;;
         *)
           xecho "$error_prefix <biw>Apps type is invaild \"$app_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
@@ -183,7 +174,7 @@ fi
 ### Run lines
 if [ "$Run_Lines" != "null" ]; then
   for rl_cmd in "${Run_Lines[@]}"; do
-    run 0 "info" "$rl_cmd"
+    run 0 "noinfo" "$rl_cmd" && xecho "$good_prefix <biw>Executed command: <on_b><bw>$rl_cmd</on_b></bw> <biw>successfully!</biw>." ||  xecho "$error_prefix <biw>Could not execute command: <on_b><bw>$rl_cmd</on_b></bw> {{ E-sad }}."
   done
 fi
 
@@ -214,10 +205,9 @@ do
   test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
   xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
   if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
-  	run 0 "noinfo" "useradd \"$username\""
-	test "$usersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\"" 	
+  	run 0 "noinfo" "useradd \"$username\"" && xecho "$good_prefix <biw>Added user \"$username\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$username\".</biw>"
+	  test "$usersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\""
   	run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
-	xecho "$good_prefix <biw>Added user \"$username\".</biw>"
   else
 	xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
   fi

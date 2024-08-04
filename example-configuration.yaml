@@ -1,8 +1,5 @@
 # New System Configuration File
 
-# Document process
-Document_process: Yes
-
 # SELinux status
 SELinux: Disabled
 
