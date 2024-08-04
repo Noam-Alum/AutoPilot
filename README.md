@@ -67,7 +67,7 @@ Plugins:
 
 ### Available directives:
 
-* **Installed_apps:**
+* **Users:**
   - Add users, set their passwords, and whether they have sudo privileges.<br>
     Use `%Gen%` to generate a password.
   - Format:
