@@ -1,9 +1,13 @@
 # <img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Linux-Dark.svg" width="38" style="max-width: 100%;"> New System
+![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-blue?style=plastic&labelColor=%237b7b7b&color=%23003972)
+[![made-with-utils.sh](https://img.shields.io/badge/Made%20with-utils.sh-blue?style=plastic&labelColor=%237b7b7b&color=%23003972)](https://github.com/Noam-Alum/utils.sh)
+![version](https://img.shields.io/badge/Version-1.0.0-blue?style=plastic&labelColor=%2390ee90&color=%23003972)
 
-![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)
-![version](https://img.shields.io/static/v1?label=Version&message=1.0.0&color=green?style=plastic)
+This script automates the setup of a new system with essential configurations, and relies heavily on a collection of functions, `utils.sh`.
 
-This script automates the setup of a new system with essential configurations.
+<br>
+
+[![Button Component](https://readme-components.vercel.app/api?component=button&text=Go-to-utils.sh)](examples)
 
 ---
 
