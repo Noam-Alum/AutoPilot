@@ -5,6 +5,8 @@
 
 This script automates the setup of a new system with essential configurations, and relies heavily on a collection of functions, `utils.sh`.
 
+https://github.com/Noam-Alum/new-system/blob/93673b8f048174590bbcf23868770a5f2b8de1d4/new-system.sh#L11-L13
+
 <br>
 
 [![Button Component](https://readme-components.vercel.app/api?component=button&text=Go-to-utils.sh)](https://github.com/Noam-Alum/utils.sh)
