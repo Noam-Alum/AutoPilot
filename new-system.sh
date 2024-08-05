@@ -75,7 +75,7 @@ function parse_yaml {
 
   ## Variables
   SELinux="$(yq '.SELinux' <<< "$configuration")"
-  check_parsed_var "SELinux" "Enabled|Disabled"
+  check_parsed_var "SELinux" "Enabled|Disabled|null"
 
   ## Arrays
   eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
@@ -83,12 +83,15 @@ function parse_yaml {
   User_Pass=($(yq -o=tsv '.Users[] | "\(.pass)"' <<< "$configuration"))
 
   ## Dictionarys
-  declare -gA Plugins
-  while IFS= read -r line; do
-    name=$(cut -d= -f1 <<< "$line")
-    script=$(cut -d= -f2 <<< "$line")
-    Plugins["$name"]="${script%.sh}"
-  done < <(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")
+  plugins_content="$(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")"
+  if [ "$plugins_content" != "=" ]; then
+    declare -gA Plugins
+    while IFS= read -r line; do
+      name=$(cut -d= -f1 <<< "$line")
+      script=$(cut -d= -f2 <<< "$line")
+      Plugins["$name"]="${script%.sh}"
+    done <<< "$plugins_content"
+  fi
 
   declare -gA Users
   local ui=0
@@ -197,18 +200,20 @@ if [ ! -n "$Plugins" ]; then
 fi
 
 ### Users
-for user in "${!Users[@]}"
-do
-  username="$(awk -F= '{print $1}' <<< "$user")"
-  usersudo="$(awk -F= '{print $2}' <<< "$user")"
-  userpass="${User_Pass[${Users[$user]}]}"
-  test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
-  xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
-  if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
-  	run 0 "noinfo" "useradd \"$username\"" && xecho "$good_prefix <biw>Added user \"$username\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$username\".</biw>"
-	  test "$usersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\""
-  	run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
-  else
-	xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
-  fi
-done
+if [ ${Users[@]} -ne 0 ]; then
+  for user in "${!Users[@]}"
+  do
+    username="$(awk -F= '{print $1}' <<< "$user")"
+    usersudo="$(awk -F= '{print $2}' <<< "$user")"
+    userpass="${User_Pass[${Users[$user]}]}"
+    test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
+    xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
+    if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
+  	  run 0 "noinfo" "useradd \"$username\"" && xecho "$good_prefix <biw>Added user \"$username\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$username\".</biw>"
+	    test "$usersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\""
+  	  run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
+    else
+	  xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
+    fi
+  done
+fi
