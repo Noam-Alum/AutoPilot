@@ -36,6 +36,10 @@
 
 - **OpenVPN**
   - Add an OpenVPN client plugin to the system
+- **Firejail**
+  - Add a plugin to setup Firejail on chrome.
+- **MakeBackup**
+  - Add a plugin to install and configure make-backup
 
 ## Main
 
