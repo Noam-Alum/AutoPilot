@@ -37,11 +37,6 @@
 - **OpenVPN**
   - Add an OpenVPN client plugin to the system
 - **Firejail**
-  - Add a plugin to setup Firejail on chrome.
+  - Add a plugin to set up Firejail on Chrome.
 - **MakeBackup**
   - Add a plugin to install and configure make-backup
-
-## Main
-
-- **Generate System Documentation**
-  - Summarize errors encountered, installed applications, configurations, and important system settings
