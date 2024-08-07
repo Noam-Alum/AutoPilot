@@ -67,6 +67,55 @@ function check_parsed_var {
   fi 
 }
 
+## New parse yaml
+function new_parse_yaml {
+  local parse_type="$1"
+  case "$parse_type" in
+    0)
+      local var_name="$2"
+      local yaml_path="$3"
+      eval "$var_name=\$(yq \"$yaml_path\" <<< \"$configuration\")"
+    ;;
+    1)
+      local array_name="$2"
+      local array_type="$3"
+      local has_q="$4"
+      local yaml_path="$5"
+      local yaml_filter="$6"
+
+      if [ "$array_type" -eq 1 ]; then
+        if [ "$has_q" -eq 1 ]; then
+          eval "$array_name=($(yq -P \"$yaml_path\" <<< \"$configuration\" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))"
+        else
+          eval "$array_name=($(yq -P \"$yaml_path\" <<< \"$configuration\"))"
+        fi
+      else
+        eval "$array_name=($(yq -o=tsv \"$yaml_path[] | \"$yaml_filter\"\" <<< \"$configuration\"))"
+      fi
+    ;;
+    2)
+      local dict_name="$2"
+      local dict_sep="$3"
+      local yaml_path="$4"
+      local key_field="$5"
+      local value_field="$6"
+
+      eval "declare -gA $dict_name"
+      while IFS= read -r line; do
+        local dict_k
+        local dict_v
+        dict_k=$(cut -d"$dict_sep" -f1 <<< "$line")
+        dict_v=$(cut -d"$dict_sep" -f2 <<< "$line")
+        eval "$dict_name[\"$dict_k\"]=\"$dict_v\""
+      done < <(yq -o=tsv "$yaml_path[] | \"$key_field$dict_sep$value_field\"" <<< "$configuration")
+    ;;
+    *)
+      echo "Invalid parse_type: $parse_type"
+      return 1
+    ;;
+  esac
+}
+
 ## Read configuration file
 function parse_yaml {
   local configuration="$1"
@@ -76,23 +125,20 @@ function parse_yaml {
   ## Variables
   SELinux="$(yq '.SELinux' <<< "$configuration")"
   check_parsed_var "SELinux" "Enabled|Disabled|null"
-  keys=($(yq 'keys | .[]' <<< "$configuration"))
 
   ## Arrays
   eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
+  Keys=($(yq 'keys | .[]' <<< "$configuration"))
   Installed_apps=($(yq -o=tsv '.Installed_apps[] | "\(.name),\(.type),\(.source)"' <<< "$configuration"))
   User_Pass=($(yq -o=tsv '.Users[] | "\(.pass)"' <<< "$configuration"))
 
   ## Dictionarys
-  plugins_content="$(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")"
-  if [ "$plugins_content" != "=" ]; then
-    declare -gA Plugins
-    while IFS= read -r line; do
-      name=$(cut -d= -f1 <<< "$line")
-      script=$(cut -d= -f2 <<< "$line")
-      Plugins["$name"]="${script%.sh}"
-    done <<< "$plugins_content"
-  fi
+  declare -gA Plugins
+  while IFS= read -r line; do
+    name=$(cut -d= -f1 <<< "$line")
+    script=$(cut -d= -f2 <<< "$line")
+    Plugins["$name"]="${script%.sh}"
+  done < <(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")
 
   declare -gA Users
   local ui=0
@@ -219,7 +265,21 @@ test -z "$conf_file" && user_input conf_file "txt" "$info_prefix <biw>What confi
 test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 yq_err="$(yq e . "$conf_file" 2>&1 > /dev/null)"
 test -z "$yq_err" || fail 1 "Configuration fail is invaild: <on_b><bir>$yq_err</bir></on_b>"
-parse_yaml "$configuration"
+
+## Parse data
+### Variables
+new_parse_yaml 0 "SELinux" "SELinux"
+
+### Arrays
+new_parse_yaml 1 "Run_Lines" 1 1 "Run_Lines"
+new_parse_yaml 1 "keys" 1 0 "keys"
+new_parse_yaml 1 "Installed_apps" 3 0 "Installed_apps" "\(.name),\(.type),\(.source)"
+new_parse_yaml 1 "User_Pass" 3 0 "Users" "\(.pass)" ""
+
+### Dictionarys
+#new_parse_yaml 2 "Plugins" "=" "Plugins" "name" "script"
+#new_parse_yaml 2 "Users" "=" "Users" "name" "sudo"
+
 
 ## Refresh package index
 xecho "$info_prefix <biw>Refreshing local package index. {{ E-redo }}</biw>"
