@@ -200,7 +200,7 @@ if [ ! -n "$Plugins" ]; then
 fi
 
 ### Users
-if [ ${Users[@]} -ne 0 ]; then
+if [ ! -z "${User_Pass[0]}" ]; then
   for user in "${!Users[@]}"
   do
     username="$(awk -F= '{print $1}' <<< "$user")"
