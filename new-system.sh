@@ -76,6 +76,7 @@ function parse_yaml {
   ## Variables
   SELinux="$(yq '.SELinux' <<< "$configuration")"
   check_parsed_var "SELinux" "Enabled|Disabled|null"
+  keys=($(yq 'keys | .[]' <<< "$configuration"))
 
   ## Arrays
   eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
@@ -102,6 +103,107 @@ function parse_yaml {
   done < <(yq -o=tsv '.Users[] | "\(.name)=\(.sudo)"' <<< "$configuration")
 }
 
+## Run functions
+function rn_SELinux {
+  if [ "$SELinux" == "Enabled" ]; then
+    xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
+    check_dependencies "SELinux" "$notgood_prefix <biw>SELinux not found, tring to install, be patient. {{ E-angry }}</biw>" "apt -y install selinux-basics selinux-policy-default" "dpkg -L selinux-basics"
+    sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
+    grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
+  elif [ "$SELinux" == "Disabled" ]; then
+    xecho "$info_prefix <biw>Trying to disable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
+    if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
+      xecho "$good_prefix <biw>SELinux is not installed, no need to disable {{ E-smile }}</biw>"
+    else
+      sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
+      grep "SELINUX=disabled" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux disabled successfully. {{ E-smile }}</biw>"
+    fi
+  fi
+}
+
+function rn_Installed_apps {
+  if [ "$Installed_apps" != ",," ]; then
+    for app in "${Installed_apps[@]}"
+    do
+      app_name=$(awk -F, {'print $1'} <<< "$app")
+      app_type=$(awk -F, {'print $2'} <<< "$app")
+      app_source=$(awk -F, {'print $3'} <<< "$app")
+
+      if [[ "null" =~ ^("$app_name"|"$app_type"|"$app_source")$ ]]; then
+        xecho "$error_prefix <biw>Error while trying to install an app ($app_name ?), missing data. {{ E-sad }}</biw>"
+      else
+        xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$app_name</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
+        case $app_type in
+          Deb)
+            xecho "$info_prefix <biw>Using apt to install \"$app_name\", be patient.</biw>" 
+            run 0 "noinfo" "apt -y install $app_source" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+            ;;
+          Pkg)
+            xecho "$info_prefix <biw>Fetching package from \"$app_source\".</biw>"
+            ia_deb_package_name="$(gen_random str)_$app_name.deb"
+            run 0 "noinfo" "curl -sLo /tmp/$ia_deb_package_name \"$app_source\" && dpkg -i /tmp/$ia_deb_package_name" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+            run 0 "noinfo" "apt-get install -f -y" && xecho "$info_prefix <biw>Tryed fixing dependency issues (if they exist.)"
+            ;;
+          Sh)
+            xecho "$info_prefix <biw>Running installation script from \"$app_source\".</biw>"
+            run 0 "noinfo" "curl -Ls \"$app_source\" | bash" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+            ;;
+          *)
+            xecho "$error_prefix <biw>Apps type is invaild \"$app_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
+            ;;
+        esac
+      fi
+    done
+  fi
+}
+
+function rn_Run_Lines {
+  if [ "$Run_Lines" != "null" ]; then
+    for rl_cmd in "${Run_Lines[@]}"; do
+      run 0 "noinfo" "$rl_cmd" && xecho "$good_prefix <biw>Executed command: <on_b><bw>$rl_cmd</on_b></bw> <biw>successfully!</biw>." ||  xecho "$error_prefix <biw>Could not execute command: <on_b><bw>$rl_cmd</on_b></bw> {{ E-sad }}."
+    done
+  fi
+}
+
+function rn_Plugins {
+  if [ ! -n "$Plugins" ]; then
+    for plugin in ${!Plugins[@]}
+    do
+      if [ -e "${Plugins[$plugin]}/run.sh" ]; then
+        if [ $(grep "run_$plugin" "${Plugins[$plugin]}/run.sh" &> /dev/null;echo $?) -eq 0 ]; then
+          xecho "$good_prefix <biw>Executing plugin \"$plugin\":</biw>"
+          source "${Plugins[$plugin]}/run.sh" &> /dev/null
+          run_$plugin
+        else
+          xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", could not find function: \"run_$plugin\".</biw>"
+        fi
+      else
+        xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", \"${Plugins[$plugin]}/run.sh\" does not exist.</biw>"
+      fi
+    done
+  fi
+}
+
+function rn_Users {
+  if [ ! -z "${User_Pass[0]}" ]; then
+    for user in "${!Users[@]}"
+    do
+      username="$(awk -F= '{print $1}' <<< "$user")"
+      usersudo="$(awk -F= '{print $2}' <<< "$user")"
+      userpass="${User_Pass[${Users[$user]}]}"
+      test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
+      xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
+      if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
+        run 0 "noinfo" "useradd \"$username\"" && xecho "$good_prefix <biw>Added user \"$username\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$username\".</biw>"
+        test "$### Usersusersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\""
+        run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
+      else
+      xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
+      fi
+    done
+  fi
+}
+
 # Main
 xecho "$banner"
 
@@ -123,97 +225,10 @@ parse_yaml "$configuration"
 xecho "$info_prefix <biw>Refreshing local package index. {{ E-redo }}</biw>"
 run 0 "noinfo" "apt-get update"
 
-### SELinux
-if [ "$SELinux" == "Enabled" ]; then
-  xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
-  check_dependencies "SELinux" "$notgood_prefix <biw>SELinux not found, tring to install, be patient. {{ E-angry }}</biw>" "apt -y install selinux-basics selinux-policy-default" "dpkg -L selinux-basics"
-  sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
-  grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
-elif [ "$SELinux" == "Disabled" ]; then
-  xecho "$info_prefix <biw>Trying to disable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
-  if [ "$(dpkg -L selinux-basics &> /dev/null; echo $?)" -ne 0 ]; then
-    xecho "$good_prefix <biw>SELinux is not installed, no need to disable {{ E-smile }}</biw>"
-  else
-    sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
-    grep "SELINUX=disabled" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux disabled successfully. {{ E-smile }}</biw>"
-  fi
-fi
+## Execute functions
+for key in "${keys[@]}"
+do
+  rn_$key
+done
 
-### Install apps
-if [ "$Installed_apps" != ",," ]; then
-  for app in "${Installed_apps[@]}"
-  do
-    app_name=$(awk -F, {'print $1'} <<< "$app")
-    app_type=$(awk -F, {'print $2'} <<< "$app")
-    app_source=$(awk -F, {'print $3'} <<< "$app")
-
-    if [[ "null" =~ ^("$app_name"|"$app_type"|"$app_source")$ ]]; then
-      xecho "$error_prefix <biw>Error while trying to install an app ($app_name ?), missing data. {{ E-sad }}</biw>"
-    else
-      xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$app_name</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
-      case $app_type in
-        Deb)
-          xecho "$info_prefix <biw>Using apt to install \"$app_name\", be patient.</biw>" 
-          run 0 "noinfo" "apt -y install $app_source" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
-          ;;
-        Pkg)
-          xecho "$info_prefix <biw>Fetching package from \"$app_source\".</biw>"
-          ia_deb_package_name="$(gen_random str)_$app_name.deb"
-          run 0 "noinfo" "curl -sLo /tmp/$ia_deb_package_name \"$app_source\" && dpkg -i /tmp/$ia_deb_package_name" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
-          run 0 "noinfo" "apt-get install -f -y" && xecho "$info_prefix <biw>Tryed fixing dependency issues (if they exist.)"
-          ;;
-        Sh)
-          xecho "$info_prefix <biw>Running installation script from \"$app_source\".</biw>"
-          run 0 "noinfo" "curl -Ls \"$app_source\" | bash" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
-          ;;
-        *)
-          xecho "$error_prefix <biw>Apps type is invaild \"$app_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
-          ;;
-      esac
-    fi
-  done
-fi
-
-### Run lines
-if [ "$Run_Lines" != "null" ]; then
-  for rl_cmd in "${Run_Lines[@]}"; do
-    run 0 "noinfo" "$rl_cmd" && xecho "$good_prefix <biw>Executed command: <on_b><bw>$rl_cmd</on_b></bw> <biw>successfully!</biw>." ||  xecho "$error_prefix <biw>Could not execute command: <on_b><bw>$rl_cmd</on_b></bw> {{ E-sad }}."
-  done
-fi
-
-### Execute plugins
-if [ ! -n "$Plugins" ]; then
-  for plugin in ${!Plugins[@]}
-  do
-    if [ -e "${Plugins[$plugin]}/run.sh" ]; then
-      if [ $(grep "run_$plugin" "${Plugins[$plugin]}/run.sh" &> /dev/null;echo $?) -eq 0 ]; then
-        xecho "$good_prefix <biw>Executing plugin \"$plugin\":</biw>"
-        source "${Plugins[$plugin]}/run.sh" &> /dev/null
-        run_$plugin
-      else
-        xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", could not find function: \"run_$plugin\".</biw>"
-      fi
-    else
-      xecho "$error_prefix <biw>Error while executing plugin \"$plugin\", \"${Plugins[$plugin]}/run.sh\" does not exist.</biw>"
-    fi
-  done
-fi
-
-### Users
-if [ ! -z "${User_Pass[0]}" ]; then
-  for user in "${!Users[@]}"
-  do
-    username="$(awk -F= '{print $1}' <<< "$user")"
-    usersudo="$(awk -F= '{print $2}' <<< "$user")"
-    userpass="${User_Pass[${Users[$user]}]}"
-    test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
-    xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
-    if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
-  	  run 0 "noinfo" "useradd \"$username\"" && xecho "$good_prefix <biw>Added user \"$username\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$username\".</biw>"
-	    test "$usersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\""
-  	  run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
-    else
-	  xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
-    fi
-  done
-fi
+xecho "$info_prefix <biw>Done. {{ E-smile }}</biw>"
