@@ -3,8 +3,8 @@
 # SELinux status
 SELinux: Disabled
 
-# List of apps to be installed
-Installed_apps:
+# List of packages to be installed
+Installed_packages:
   - name: FireJail
     type: Deb
     source: firejail
