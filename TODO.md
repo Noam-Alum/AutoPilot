@@ -1,5 +1,26 @@
 # To do list
 
+## New parsing method
+
+**Checked:**
+
+- SELinux
+- Installed_packages
+
+**Currently:**
+
+- Run_Lines
+
+> error on this line: 
+    ```bash
+    eval $yaml_1=($(printf '%q' "$(yq -P ".$yaml_1" <<< "$configuration")"))
+    ```
+
+**Need to check:**
+
+- Plugins
+- Users
+
 ## Directives
 
 - **Network Configuration**

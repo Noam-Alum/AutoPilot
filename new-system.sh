@@ -72,7 +72,7 @@ function parse_yaml {
       eval $yaml_1="$(printf '%q' "$(yq ".$yaml_1" <<< "$configuration")")"
       ;;
     1)
-      eval Run_Lines=($(printf '%q' "$(yq -P ".$yaml_1" <<< "$configuration")"))
+      eval $yaml_1=($(printf '%q' "$(yq -P ".$yaml_1" <<< "$configuration")"))
       ;;
     2)
   	  local yaml_2=($(parse_yaml keys "$yaml_1"))
@@ -119,17 +119,17 @@ function rn_SELinux {
 
 function rn_Installed_packages {
   parse_yaml 3 Installed_packages name type source
-  if [ -z "${!Installed_packages[@]}" ]; then
-    IP_keys=($(tr ' ' '\n' <<< "${!Installed_apps[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
+  if [ -z "${!Installed_packages[0]}" ]; then
+    IP_keys=($(tr ' ' '\n' <<< "${!Installed_packages[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
     for pkg in "${IP_keys[@]}"
     do
       pkg_type="${Installed_packages["$pkg [0]"]}"
       pkg_source="${Installed_packages["$pkg [1]"]}"
 
-      if [[ "null" =~ ^("$pkg"|"$pkg_type"|"$pkg_source")$ ]]; then
-        xecho "$error_prefix <biw>Error while trying to install an app ($pkg_name ?), missing data. {{ E-sad }}</biw>"
+      if [[ '' =~ ^("$pkg"|"$pkg_type"|"$pkg_source")$ ]]; then
+        xecho "$error_prefix <biw>Error while trying to install an package ($pkg ?), missing data. {{ E-sad }}</biw>"
       else
-        xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$pkg_name</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
+        xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$pkg</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
         case $pkg_type in
           Deb)
             xecho "$info_prefix <biw>Using apt to install \"$pkg\", be patient.</biw>" 
@@ -146,7 +146,7 @@ function rn_Installed_packages {
             run 0 "noinfo" "curl -Ls \"$pkg_source\" | bash" && xecho "$good_prefix <biw>Installed \"$pkg\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$pkg\" {{ E-sad }}</biw>"
             ;;
           *)
-            xecho "$error_prefix <biw>Apps type is invaild \"$pkg_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
+            xecho "$error_prefix <biw>Package type is invaild \"$pkg_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
             ;;
         esac
       fi
