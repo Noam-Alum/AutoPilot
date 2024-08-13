@@ -114,18 +114,18 @@ Plugins:
       - echo "Hey"
     ```
 
-* **Installed_apps:**
-  - Which apps to install and how.
+* **Installed_packages:**
+  - Which packages to install and how.
   - Format:
     ```yaml
-    Installed_apps:
+    Installed_packages:
       - name: AnyName
         type: Deb/Pkg/Sh
         source: Deb name/Package url/Commands to run
     ```
   - Example:
     ```yaml
-    Installed_apps:
+    Installed_packages:
       - name: FireJail
         type: Deb
         source: firejail

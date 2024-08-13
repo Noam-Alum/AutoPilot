@@ -66,33 +66,39 @@ function parse_yaml {
 
   case $yaml_mode in
     keys)
- 	    yq --output-format tsv ".$yaml_1 | keys" <<< "$configuration"
+      local yaml_2="$3"
+ 	    yq --output-format tsv ".$yaml_1[].$yaml_2" <<< "$configuration" 2> /dev/null
  	    ;;
     0)
-      eval $yaml_1="$(printf '%q' "$(yq ".$yaml_1" <<< "$configuration")")"
+      eval $yaml_1="$(printf '%q' "$(yq ".$yaml_1" <<< "$configuration" 2> /dev/null)")"
       ;;
     1)
-      eval $yaml_1=($(printf '%q' "$(yq -P ".$yaml_1" <<< "$configuration")"))
+      eval "$yaml_1=()"
+      local yaml_2="$(yq ".$yaml_1[]" <<< "$configuration" 2> /dev/null)"
+      while IFS= read -r line; do
+        eval "$yaml_1+=('$(printf '%q' "$line" | sed 's/\\ / /g')')"
+      done <<< "$yaml_2"
       ;;
     2)
-  	  local yaml_2=($(parse_yaml keys "$yaml_1"))
-  	  local yaml_3="$3"
+      local yaml_2="$3"
+  	  local yaml_3=($(parse_yaml keys "$yaml_1" "$yaml_2"))
+  	  local yaml_4="$4"
   	  declare -gA "$yaml_1"
-  	  for item in "${yaml_2[@]}"
+  	  for item in "${yaml_3[@]}"
   	  do
-        eval $yaml_1["$item"]="$(printf '%q' "$(yq eval ".$yaml_1.$item.$yaml_3" <<< "$configuration")")"
+        eval $yaml_1["$item"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration" 2> /dev/null)")"
   	  done
       ;;
     3)
       local yaml_2="$3"
-      local yaml_3=($(yq -o=tsv ".$yaml_1[] | \"\(.$yaml_2)\"" <<< "$configuration"))
+      local yaml_3=($(yq -o=tsv ".$yaml_1[] | \"\(.$yaml_2)\"" <<< "$configuration" 2> /dev/null))
       local yaml_4="$4"
       local yaml_5="$5"
       declare -gA "$yaml_1"
   	  for item in "${yaml_3[@]}"
   	  do
-        eval $yaml_1["$item [0]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration")")"
-        eval $yaml_1["$item [1]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_5" <<< "$configuration")")"
+        eval $yaml_1["$item [0]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [1]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_5" <<< "$configuration" 2> /dev/null)")"
   	  done
       ;;
   esac
@@ -119,7 +125,7 @@ function rn_SELinux {
 
 function rn_Installed_packages {
   parse_yaml 3 Installed_packages name type source
-  if [ -z "${!Installed_packages[0]}" ]; then
+  if [ "${#Installed_packages[@]}" -ne 0 ]; then
     IP_keys=($(tr ' ' '\n' <<< "${!Installed_packages[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
     for pkg in "${IP_keys[@]}"
     do
@@ -156,7 +162,7 @@ function rn_Installed_packages {
 
 function rn_Run_Lines {
   parse_yaml 1 Run_Lines
-  if [ "$Run_Lines" != "null" ]; then
+  if [ "${#Run_Lines[@]}" -ne 0 ] && [ ! -z "${Run_Lines}" ]; then
     for rl_cmd in "${Run_Lines[@]}"; do
       run 0 "noinfo" "$rl_cmd" && xecho "$good_prefix <biw>Executed command: <on_b><bw>$rl_cmd</on_b></bw> <biw>successfully!</biw>." ||  xecho "$error_prefix <biw>Could not execute command: <on_b><bw>$rl_cmd</on_b></bw> {{ E-sad }}."
     done
@@ -164,8 +170,8 @@ function rn_Run_Lines {
 }
 
 function rn_Plugins {
-  parse_yaml 2 Plugins script
-  if [ -z "${!Plugins[@]}" ]; then
+  parse_yaml 2 Plugins name script
+  if [ "${#Plugins[@]}" -ne 0 ]; then
     for plugin in ${!Plugins[@]}
     do
       if [ -e "${Plugins[$plugin]}/run.sh" ]; then
@@ -185,12 +191,11 @@ function rn_Plugins {
 
 function rn_Users {
   parse_yaml 3 Users name pass sudo
-  if [ -z "${!Users[@]}" ]; then
+  if [ "${#Users[@]}" -ne 0 ]; then
     U_keys=($(tr ' ' '\n' <<< "${!Users[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
-    for user in "${U_keys[@]}"
-    do
-      usersudo="${Installed_packages["$user [0]"]}"
-      userpass="${Installed_packages["$user [1]"]}"
+    for user in "${U_keys[@]}"; do
+      userpass="${Users["$user [0]"]}"
+      usersudo="${Users["$user [1]"]}"
       test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
       xecho "$info_prefix <biw>Creating user \"$user\" (sudo? $usersudo).</biw>"
       if [ $(cat /etc/passwd | grep "$user:" &> /dev/null;echo $?) -ne 0 ]; then
@@ -219,7 +224,7 @@ test -z "$conf_file" && user_input conf_file "txt" "$info_prefix <biw>What confi
 test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 yq_err="$(yq e . "$conf_file" 2>&1 > /dev/null)"
 test -z "$yq_err" || fail 1 "Configuration fail is invaild: <on_b><bir>$yq_err</bir></on_b>"
-keys=($(yq 'keys | .[]' <<< "$configuration"))
+keys=($(yq 'keys | .[]' <<< "$configuration" 2> /dev/null))
 
 # parse_yaml 2 Environment_Configuration content
 
