@@ -43,7 +43,7 @@ sudo ./new-system.sh configuration.yaml
 ```yaml
 SELinux: Disabled
 
-Installed_apps:
+Installed_packages:
   - name: FireJail
     type: Deb
     source: firejail
