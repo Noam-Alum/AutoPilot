@@ -60,51 +60,53 @@ function check_dependencies {
   fi
 }
 
-function check_parsed_var {
-  var_value="$(eval echo "\$$1")" 
-  if [[ ! "$var_value" =~ ^($2)$ ]]; then
-     xecho "$notgood_prefix <biw>Warning, \"$1\" directive cannot evaluate to \"$var_value\", skipping.</biw>"
-  fi 
-}
-
-## Read configuration file
 function parse_yaml {
-  local configuration="$1"
+  local yaml_mode="$1"
+  local yaml_1="$2"
 
-  # Save variables from YAML
-
-  ## Variables
-  SELinux="$(yq '.SELinux' <<< "$configuration")"
-  check_parsed_var "SELinux" "Enabled|Disabled|null"
-  keys=($(yq 'keys | .[]' <<< "$configuration"))
-
-  ## Arrays
-  eval Run_Lines=($(yq -P '.Run_Lines' <<< "$configuration" | sed 's/^- //' | awk '{ gsub(/"/, "\\\""); print "\"" $0 "\"" }'))
-  Installed_apps=($(yq -o=tsv '.Installed_apps[] | "\(.name),\(.type),\(.source)"' <<< "$configuration"))
-  User_Pass=($(yq -o=tsv '.Users[] | "\(.pass)"' <<< "$configuration"))
-
-  ## Dictionarys
-  plugins_content="$(yq -o=tsv '.Plugins[] | "\(.name)=\(.script)"' <<< "$configuration")"
-  if [ "$plugins_content" != "=" ]; then
-    declare -gA Plugins
-    while IFS= read -r line; do
-      name=$(cut -d= -f1 <<< "$line")
-      script=$(cut -d= -f2 <<< "$line")
-      Plugins["$name"]="${script%.sh}"
-    done <<< "$plugins_content"
-  fi
-
-  declare -gA Users
-  local ui=0
-  while IFS= read -r user; do
-    name="$user"
-    Users["$name"]="$ui"
-    ui=$(( $ui + 1 ))
-  done < <(yq -o=tsv '.Users[] | "\(.name)=\(.sudo)"' <<< "$configuration")
+  case $yaml_mode in
+    keys)
+      local yaml_2="$3"
+ 	    yq --output-format tsv ".$yaml_1[].$yaml_2" <<< "$configuration" 2> /dev/null
+ 	    ;;
+    0)
+      eval $yaml_1="$(printf '%q' "$(yq ".$yaml_1" <<< "$configuration" 2> /dev/null)")"
+      ;;
+    1)
+      eval "$yaml_1=()"
+      local yaml_2="$(yq ".$yaml_1[]" <<< "$configuration" 2> /dev/null)"
+      while IFS= read -r line; do
+        eval "$yaml_1+=('$(printf '%q' "$line" | sed 's/\\ / /g')')"
+      done <<< "$yaml_2"
+      ;;
+    2)
+      local yaml_2="$3"
+  	  local yaml_3=($(parse_yaml keys "$yaml_1" "$yaml_2"))
+  	  local yaml_4="$4"
+  	  declare -gA "$yaml_1"
+  	  for item in "${yaml_3[@]}"
+  	  do
+        eval $yaml_1["$item"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration" 2> /dev/null)")"
+  	  done
+      ;;
+    3)
+      local yaml_2="$3"
+      local yaml_3=($(yq -o=tsv ".$yaml_1[] | \"\(.$yaml_2)\"" <<< "$configuration" 2> /dev/null))
+      local yaml_4="$4"
+      local yaml_5="$5"
+      declare -gA "$yaml_1"
+  	  for item in "${yaml_3[@]}"
+  	  do
+        eval $yaml_1["$item [0]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [1]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_5" <<< "$configuration" 2> /dev/null)")"
+  	  done
+      ;;
+  esac
 }
 
 ## Run functions
 function rn_SELinux {
+  parse_yaml 0 SELinux
   if [ "$SELinux" == "Enabled" ]; then
     xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
     check_dependencies "SELinux" "$notgood_prefix <biw>SELinux not found, tring to install, be patient. {{ E-angry }}</biw>" "apt -y install selinux-basics selinux-policy-default" "dpkg -L selinux-basics"
@@ -121,35 +123,36 @@ function rn_SELinux {
   fi
 }
 
-function rn_Installed_apps {
-  if [ "$Installed_apps" != ",," ]; then
-    for app in "${Installed_apps[@]}"
+function rn_Installed_packages {
+  parse_yaml 3 Installed_packages name type source
+  if [ "${#Installed_packages[@]}" -ne 0 ]; then
+    IP_keys=($(tr ' ' '\n' <<< "${!Installed_packages[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
+    for pkg in "${IP_keys[@]}"
     do
-      app_name=$(awk -F, {'print $1'} <<< "$app")
-      app_type=$(awk -F, {'print $2'} <<< "$app")
-      app_source=$(awk -F, {'print $3'} <<< "$app")
+      pkg_type="${Installed_packages["$pkg [0]"]}"
+      pkg_source="${Installed_packages["$pkg [1]"]}"
 
-      if [[ "null" =~ ^("$app_name"|"$app_type"|"$app_source")$ ]]; then
-        xecho "$error_prefix <biw>Error while trying to install an app ($app_name ?), missing data. {{ E-sad }}</biw>"
+      if [[ '' =~ ^("$pkg"|"$pkg_type"|"$pkg_source")$ ]]; then
+        xecho "$error_prefix <biw>Error while trying to install an package ($pkg ?), missing data. {{ E-sad }}</biw>"
       else
-        xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$app_name</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
-        case $app_type in
+        xecho "$info_prefix <biw>Trying to install</biw> <biy>{{ E-star }}</biy> <biw>$pkg</biw> <biy>{{ E-star }}</biy> <biw>:</biw>"
+        case $pkg_type in
           Deb)
-            xecho "$info_prefix <biw>Using apt to install \"$app_name\", be patient.</biw>" 
-            run 0 "noinfo" "apt -y install $app_source" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+            xecho "$info_prefix <biw>Using apt to install \"$pkg\", be patient.</biw>" 
+            run 0 "noinfo" "apt -y install $pkg_source" && xecho "$good_prefix <biw>Installed \"$pkg\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$pkg\" {{ E-sad }}</biw>"
             ;;
           Pkg)
-            xecho "$info_prefix <biw>Fetching package from \"$app_source\".</biw>"
-            ia_deb_package_name="$(gen_random str)_$app_name.deb"
-            run 0 "noinfo" "curl -sLo /tmp/$ia_deb_package_name \"$app_source\" && dpkg -i /tmp/$ia_deb_package_name" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+            xecho "$info_prefix <biw>Fetching package from \"$pkg_source\".</biw>"
+            ia_deb_package_name="$(gen_random str)_$pkg.deb"
+            run 0 "noinfo" "curl -sLo /tmp/$ia_deb_package_name \"$pkg_source\" && dpkg -i /tmp/$ia_deb_package_name" && xecho "$good_prefix <biw>Installed \"$pkg\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$pkg\" {{ E-sad }}</biw>"
             run 0 "noinfo" "apt-get install -f -y" && xecho "$info_prefix <biw>Tryed fixing dependency issues (if they exist.)"
             ;;
           Sh)
-            xecho "$info_prefix <biw>Running installation script from \"$app_source\".</biw>"
-            run 0 "noinfo" "curl -Ls \"$app_source\" | bash" && xecho "$good_prefix <biw>Installed \"$app_name\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$app_name\" {{ E-sad }}</biw>"
+            xecho "$info_prefix <biw>Running installation script from \"$pkg_source\".</biw>"
+            run 0 "noinfo" "curl -Ls \"$pkg_source\" | bash" && xecho "$good_prefix <biw>Installed \"$pkg\" successfully! {{ E-smile }}</biw>" || xecho "$error_prefix <biw>Could not install \"$pkg\" {{ E-sad }}</biw>"
             ;;
           *)
-            xecho "$error_prefix <biw>Apps type is invaild \"$app_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
+            xecho "$error_prefix <biw>Package type is invaild \"$pkg_type\", skipping. (Use Deb/Pkg/Sh)</biw>"
             ;;
         esac
       fi
@@ -158,7 +161,8 @@ function rn_Installed_apps {
 }
 
 function rn_Run_Lines {
-  if [ "$Run_Lines" != "null" ]; then
+  parse_yaml 1 Run_Lines
+  if [ "${#Run_Lines[@]}" -ne 0 ] && [ ! -z "${Run_Lines}" ]; then
     for rl_cmd in "${Run_Lines[@]}"; do
       run 0 "noinfo" "$rl_cmd" && xecho "$good_prefix <biw>Executed command: <on_b><bw>$rl_cmd</on_b></bw> <biw>successfully!</biw>." ||  xecho "$error_prefix <biw>Could not execute command: <on_b><bw>$rl_cmd</on_b></bw> {{ E-sad }}."
     done
@@ -166,7 +170,8 @@ function rn_Run_Lines {
 }
 
 function rn_Plugins {
-  if [ ! -n "$Plugins" ]; then
+  parse_yaml 2 Plugins name script
+  if [ "${#Plugins[@]}" -ne 0 ]; then
     for plugin in ${!Plugins[@]}
     do
       if [ -e "${Plugins[$plugin]}/run.sh" ]; then
@@ -185,18 +190,18 @@ function rn_Plugins {
 }
 
 function rn_Users {
-  if [ ! -z "${User_Pass[0]}" ]; then
-    for user in "${!Users[@]}"
-    do
-      username="$(awk -F= '{print $1}' <<< "$user")"
-      usersudo="$(awk -F= '{print $2}' <<< "$user")"
-      userpass="${User_Pass[${Users[$user]}]}"
+  parse_yaml 3 Users name pass sudo
+  if [ "${#Users[@]}" -ne 0 ]; then
+    U_keys=($(tr ' ' '\n' <<< "${!Users[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
+    for user in "${U_keys[@]}"; do
+      userpass="${Users["$user [0]"]}"
+      usersudo="${Users["$user [1]"]}"
       test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
-      xecho "$info_prefix <biw>Creating user \"$username\" (sudo? $usersudo).</biw>"
-      if [ $(cat /etc/passwd | grep "$username:" &> /dev/null;echo $?) -ne 0 ]; then
-        run 0 "noinfo" "useradd \"$username\"" && xecho "$good_prefix <biw>Added user \"$username\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$username\".</biw>"
-        test "$### Usersusersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$username\""
-        run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $username"
+      xecho "$info_prefix <biw>Creating user \"$user\" (sudo? $usersudo).</biw>"
+      if [ $(cat /etc/passwd | grep "$user:" &> /dev/null;echo $?) -ne 0 ]; then
+        run 0 "noinfo" "useradd \"$user\"" && xecho "$good_prefix <biw>Added user \"$user\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$user\".</biw>"
+        test "$### Usersusersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$user\""
+        run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $user"
       else
       xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
       fi
@@ -219,7 +224,9 @@ test -z "$conf_file" && user_input conf_file "txt" "$info_prefix <biw>What confi
 test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 yq_err="$(yq e . "$conf_file" 2>&1 > /dev/null)"
 test -z "$yq_err" || fail 1 "Configuration fail is invaild: <on_b><bir>$yq_err</bir></on_b>"
-parse_yaml "$configuration"
+keys=($(yq 'keys | .[]' <<< "$configuration" 2> /dev/null))
+
+# parse_yaml 2 Environment_Configuration content
 
 ## Refresh package index
 xecho "$info_prefix <biw>Refreshing local package index. {{ E-redo }}</biw>"
