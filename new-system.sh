@@ -216,7 +216,7 @@ xecho "$banner"
 test "$UID" -ne 0 && fail 1 "Script must be run as root, exiting."
 
 ## Check dependencies
-check_dependencies "yq" "$notgood_prefix <biw>Dependency missing, trying to install yq.</biw>" "curl -o '/usr/bin/yq' 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' && chmod +x /usr/bin/yq" "which yq"
+check_dependencies "yq" "$notgood_prefix <biw>Dependency missing, trying to install yq.</biw>" "curl -Lso '/usr/bin/yq' 'https://github.com/mikefarah/yq/releases/download/v4.44.2/yq_linux_amd64' && chmod +x /usr/bin/yq" "which yq"
 
 ## Get conf file
 conf_file="$1"
