@@ -162,7 +162,7 @@ Network_Configuration:
 
 * **Network_Configuration:**
     - Per NIC simple configuration.<br>
-      Use "%DHCP%", to use dhcp. (If used at any of the entries dhcp would be used on the whole nic.)
+      Use `"%DHCP%"`, to use dhcp. (If used at any of the entries dhcp would be used on the whole nic.)
     - Format:
       ```yaml        
       Network_Configuration:
