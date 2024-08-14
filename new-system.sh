@@ -101,10 +101,66 @@ function parse_yaml {
         eval $yaml_1["$item [1]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_5" <<< "$configuration" 2> /dev/null)")"
   	  done
       ;;
+    4)
+      local yaml_2="$3"
+      local yaml_3=($(yq -o=tsv ".$yaml_1[] | \"\(.$yaml_2)\"" <<< "$configuration" 2> /dev/null))
+      local yaml_4="$4"
+      local yaml_5="$5"
+      local yaml_6="$6"
+      declare -gA "$yaml_1"
+  	  for item in "${yaml_3[@]}"
+  	  do
+        eval $yaml_1["$item [0]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [1]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_5" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [2]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_6" <<< "$configuration" 2> /dev/null)")"
+  	  done
+      ;;
   esac
 }
 
 ## Run functions
+function rn_Network_Configuration {
+  parse_yaml 4 Network_Configuration nic ip gateway dns
+  check_dependencies "network-manager" "$notgood_prefix <biw>Dependency missing, trying to install network-manager.</biw>" "apt install -yq network-manager &> /dev/null" "which nmcli"
+
+  if [ ${#Network_Configuration[@]} -ne 0 ]; then
+    if [ $(grep -E '^\[keyfile\]|unmanaged-devices=' /etc/NetworkManager/NetworkManager.conf &> /dev/null;echo $?) -eq 0 ]; then
+      run 0 "noinfo" "sudo sed -i 's/^\(unmanaged-devices\s*=\s*\).*/\1none/' /etc/NetworkManager/NetworkManager.conf"
+    else
+      echo -e "\n[keyfile]\nunmanaged-devices=none" >> /etc/NetworkManager/NetworkManager.conf
+    fi
+    run 0 "noinfo" "systemctl restart NetworkManager"
+
+    NC_keys=($(tr ' ' '\n' <<< "${!Network_Configuration[@]}" | grep -Ev '\[(0|1|2)\]' | sort -u))
+    for nic in "${NC_keys[@]}"
+    do
+      nic_ip="${Network_Configuration["$nic [0]"]}"
+      nic_gateway="${Network_Configuration["$nic [1]"]}"
+      nic_dns="${Network_Configuration["$nic [2]"]}"
+
+      xecho "$info_prefix <biw>Modifying connection named \"$nic\"</biw>"
+
+      if [[ "%DHCP%" =~ ^("$nic_ip"|"$nic_dns"|"$nic_gateway")$ ]]; then
+        if nmcli connection show "$nic" &> /dev/null; then
+          run 0 "noinfo" "nmcli connection modify \"$nic\" ipv4.method auto" && xecho "$info_prefix <biw>Modified connection named \"$nic\" to use DHCP.</biw> <bip>{{ E-sleep }}</bip>" ||  xecho "$notgood_prefix <biw>Could not modify connection named \"$nic\" to use DHCP. {{ E-nervous }}</biw>" 
+        else
+          xecho "$info_prefix <biw>Could not find a connection named \"$nic\" trying to create one. {{ E-nervous }}</biw>"
+          run 0 "noinfo" "nmcli connection add type ethernet ifname \"$nic\" con-name "$nic" ipv4.method auto" && xecho "$info_prefix <biw>Modified connection named \"$nic\" to use DHCP.</biw> <biy>{{ E-star }}</biy>" ||  xecho "$notgood_prefix <biw>Could not modify connection named \"$nic\" to use DHCP. {{ E-nervous }}</biw>"
+        fi
+        run 0 "noinfo" "nmcli connection up \"$nic\"" && xecho "$good_prefix <biw>Nic $nic is now using DHCP.</biw> <big>{{ E-success }}</big>" || xecho "$error_prefix <biw>Could not bring up connection named \"$nic\"</biw> <bir>{{ E-fail }}</bir>"
+      else
+        if nmcli connection show "$nic" &> /dev/null; then
+          run 0 "noinfo" "nmcli connection modify $nic ipv4.addresses $nic_ip ipv4.gateway $nic_gateway ipv4.dns \"$nic_dns\" ipv4.method manual" && xecho "$info_prefix <biw>Modified connection named \"$nic\",</biw> <bip>IP=$nic_ip, GATEWAY=$nic_gateway, DNS=$nic_dns</bip><biw>.</biw> <biy>{{ E-star }}</biy>" ||  xecho "$notgood_prefix <biw>Could not modify connection named \"$nic\", <bip>IP=$nic_ip, GATEWAY=$nic_gateway, DNS=$nic_dns</bip><biw>. {{ E-nervous }}</biw>"
+        else
+          xecho "$info_prefix <biw>Could not find a connection named \"$nic\" trying to create one. {{ E-nervous }}</biw>"
+          run 0 "noinfo" "nmcli connection add type ethernet con-name $nic ifname $nic ipv4.addresses $nic_ip ipv4.gateway $nic_gateway ipv4.dns \"$nic_dns\" ipv4.method manual" && xecho "$info_prefix <biw>Modified connection named \"$nic\",</biw> <bip>IP=$nic_ip, GATEWAY=$nic_gateway, DNS=$nic_dns</bip><biw>.</biw> <biy>{{ E-star }}</biy>" ||  xecho "$notgood_prefix <biw>Could not modify connection named \"$nic\", <bip>IP=$nic_ip, GATEWAY=$nic_gateway, DNS=$nic_dns</bip><biw>. {{ E-nervous }}</biw>"
+        fi
+        run 0 "noinfo" "nmcli connection up \"$nic\"" && xecho "$good_prefix <biw>Nic $nic is now manually configured.</biw> <big>{{ E-success }}</big>" || xecho "$error_prefix <biw>Could not bring up connection named \"$nic\"</biw> <bir>{{ E-fail }}</bir>"
+      fi
+    done
+  fi
+}
+
 function rn_SELinux {
   parse_yaml 0 SELinux
   if [ "$SELinux" == "Enabled" ]; then
