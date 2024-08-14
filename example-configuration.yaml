@@ -59,6 +59,6 @@ Network_Configuration:
     gateway: 192.168.2.1
     dns: 8.8.8.8,8.4.8.4
   - nic: eth0
-    ip: %DHCP%
-    gateway: %DHCP%
-    dns: %DHCP%
+    ip: "%DHCP%"
+    gateway: "%DHCP%"
+    dns: "%DHCP%"
