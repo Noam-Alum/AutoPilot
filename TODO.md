@@ -2,11 +2,6 @@
 
 ## Directives
 
-- **Network Configuration**
-  - Configure network settings:
-    - Set up static IP addresses
-    - Configure firewall rules
-
 - **Environment Configuration**
   - Customize environment variables (e.g., export VAR=value)
   - Configure shell settings (e.g., ~/.bashrc or equivalent)

@@ -69,6 +69,16 @@ Plugins:
     script: plugins/firejail
   - name: make_backup
     script: plugins/make_backup
+
+Network_Configuration:
+  - nic: tun0
+    ip: 192.168.2.14/24
+    gateway: 192.168.2.1
+    dns: 8.8.8.8,8.4.8.4
+  - nic: eth0
+    ip: "%DHCP%"
+    gateway: "%DHCP%"
+    dns: "%DHCP%"
 ```
 
 ### Available directives:
@@ -149,3 +159,27 @@ Plugins:
       - name: make_backup
         script: plugins/make_backup/run.sh
     ```
+
+* **Network_Configuration:**
+    - Per NIC simple configuration.<br>
+      Use `"%DHCP%"`, to use dhcp. (If used at any of the entries dhcp would be used on the whole nic.)
+    - Format:
+      ```yaml        
+      Network_Configuration:
+        - nic: INTERFACE
+          ip: IP_ADDRESS/PREFIX
+          gateway: GATEWAY_ADDRESS
+          dns: DNS1,DNS2,DNS3
+      ```
+    - Example:
+      ```yaml 
+      Network_Configuration:
+        - nic: tun0
+          ip: 192.168.2.14/24
+          gateway: 192.168.2.1
+          dns: 8.8.8.8,8.4.8.4
+        - nic: eth0
+          ip: "%DHCP%"
+          gateway: "%DHCP%"
+          dns: "%DHCP%
+      ```

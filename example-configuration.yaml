@@ -21,6 +21,16 @@ Installed_packages:
     type: Deb
     source: git
 
+Network_Configuration:
+  - nic: tun0
+    ip: 192.168.2.14/24
+    gateway: 192.168.2.1
+    dns: 8.8.8.8,8.4.8.4
+  - nic: eth0
+    ip: "%DHCP%"
+    gateway: "%DHCP%"
+    dns: "%DHCP%"
+
 # Shell commands to run
 Run_Lines:
   - echo "Hello"
@@ -41,3 +51,14 @@ Users:
   - name: shay
     pass: "mL{3_Ajx04,,,.......||||||//3QZ"
     sudo: no
+
+# Network Configuration
+Network_Configuration:
+  - nic: tun0
+    ip: 192.168.2.14
+    gateway: 192.168.2.1
+    dns: 8.8.8.8,8.4.8.4
+  - nic: eth0
+    ip: %DHCP%
+    gateway: %DHCP%
+    dns: %DHCP%
