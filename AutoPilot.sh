@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-# **AutoPilot - Its simple.**
+# **AutoPilot - It's simple.**
 #
 # | Author: Noam Alum
 # | Created: July 30, 2024
