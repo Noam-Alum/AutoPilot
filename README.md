@@ -5,7 +5,7 @@
 
 This script automates the setup of a new system with essential configurations, and relies heavily on a collection of functions, `utils.sh`.
 
-https://github.com/Noam-Alum/AutoPilot/blob/93673b8f048174590bbcf23868770a5f2b8de1d4/AutoPilot.sh#L11-L13
+https://github.com/Noam-Alum/AutoPilot/blob/8a05103fdd2deaaf2c534efd20c3c6fe5dbd2e04/AutoPilot.sh#L11-L13
 
 <br>
 
