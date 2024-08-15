@@ -1,11 +1,11 @@
-# <img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Linux-Dark.svg" width="38" style="max-width: 100%;"> New System
+# <img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Linux-Dark.svg" width="38" style="max-width: 100%;"> AutoPilot
 ![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-blue?style=plastic&labelColor=%237b7b7b&color=%23003972)
 [![made-with-utils.sh](https://img.shields.io/badge/Made%20with-utils.sh-blue?style=plastic&labelColor=%237b7b7b&color=%23003972)](https://github.com/Noam-Alum/utils.sh)
 ![version](https://img.shields.io/badge/Version-1.0.0-blue?style=plastic&labelColor=%2390ee90&color=%23003972)
 
 This script automates the setup of a new system with essential configurations, and relies heavily on a collection of functions, `utils.sh`.
 
-https://github.com/Noam-Alum/new-system/blob/93673b8f048174590bbcf23868770a5f2b8de1d4/new-system.sh#L11-L13
+https://github.com/Noam-Alum/AutoPilot/blob/93673b8f048174590bbcf23868770a5f2b8de1d4/AutoPilot.sh#L11-L13
 
 <br>
 
@@ -17,12 +17,12 @@ https://github.com/Noam-Alum/new-system/blob/93673b8f048174590bbcf23868770a5f2b8
 
 - **Git clone:**
   ```sh
-  git clone https://github.com/Noam-Alum/new-system.git
+  git clone https://github.com/Noam-Alum/AutoPilot.git
   ```
 
 - **wget:**
   ```sh
-  wget https://github.com/Noam-Alum/new-system/archive/refs/heads/main.zip
+  wget https://github.com/Noam-Alum/AutoPilot/archive/refs/heads/main.zip
   unzip main.zip
   ```
 
@@ -31,14 +31,14 @@ https://github.com/Noam-Alum/new-system/blob/93673b8f048174590bbcf23868770a5f2b8
 > To use the script you first need to conduct a configuration file.
 
 ```sh
-sudo ./new-system.sh configuration.yaml
+sudo ./AutoPilot.sh configuration.yaml
 ```
 
 ---
 
 ## <img src="https://icons.iconarchive.com/icons/dtafalonso/android-lollipop/256/Settings-icon.png" width="26" style="max-width: 100%;"> Configuration
 
-**new-system** uses *YAML* for its configuration file, for example:
+**AutoPilot** uses *YAML* for its configuration file, for example:
 
 ```yaml
 SELinux: Disabled

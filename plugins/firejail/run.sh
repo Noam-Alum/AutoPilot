@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Plugin for new-system, to install firejail
+# Plugin for AutoPilot, to install firejail
 #
 
 function run_FireJail {

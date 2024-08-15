@@ -2,6 +2,9 @@
 
 ## Directives
 
+- **Repo**
+    - Add new repos to apt.
+
 - **Environment Configuration**
   - Customize environment variables (e.g., export VAR=value)
   - Configure shell settings (e.g., ~/.bashrc or equivalent)
