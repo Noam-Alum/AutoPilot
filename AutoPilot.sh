@@ -121,6 +121,23 @@ function parse_yaml {
 }
 
 ## Run functions
+function rn_Environment_configuration {
+  parse_yaml 2 Environment_configuration user config
+  if [ "${#Environment_configuration[@]}" -ne 0 ]; then
+    for env_user in ${!Environment_configuration[@]}
+    do
+      xecho "$info_prefix <biw>Trying to add environment configuration to user \"$env_user\".</biw>"
+      if [ $(cat /etc/passwd | grep "$env_user:" &> /dev/null;echo $?) -eq 0 ]; then
+        test -d "$(grep "$env_user:" /etc/passwd | awk -F: '{print $(NF-1)}')" || run 0 'noinfo' "mkdir -p /home/$env_user/"
+        printf -v env_config '%q' "${Environment_configuration[$env_user]}"
+        run 0 'noinfo' 'eval echo $env_config >> /home/$env_user/.bashrc' && xecho "$good_prefix <biw>Added environment configuration successfully.</biw><big>{{ E-success }}</big>" || xecho "$error_prefix <biw>Failed to add environment configuration. {{ E-nervous }}</biw>"
+      else
+        xecho "$notgood_prefix <biw>User does not exist! could not add environment configuration. {{ E-angry }}</biw>"
+      fi
+    done
+  fi
+}
+
 function rn_Network_Configuration {
   parse_yaml 4 Network_Configuration nic ip gateway dns
   check_dependencies "network-manager" "$notgood_prefix <biw>Dependency missing, trying to install network-manager.</biw>" "apt install -yq network-manager &> /dev/null" "which nmcli"
@@ -167,7 +184,7 @@ function rn_SELinux {
   parse_yaml 0 SELinux
   if [ "$SELinux" == "Enabled" ]; then
     xecho "$info_prefix <biw>Trying to enable {{ E-arrowright }} SELinux {{ E-arrowleft }} {{ E-nervous }}</biw>"
-    check_dependencies "SELinux" "$notgood_prefix <biw>SELinux not found, tring to install, be patient. {{ E-angry }}</biw>" "apt -y install selinux-basics selinux-policy-default" "dpkg -L selinux-basics"
+    check_dependencies "SELinux" "$notgood_prefix <biw>SELinux not found, trying to install, be patient. {{ E-angry }}</biw>" "apt -y install selinux-basics selinux-policy-default" "dpkg -L selinux-basics"
     sed -i 's/^SELINUX=.*$/SELINUX=enforcing/' /etc/selinux/config
     grep "SELINUX=enforcing" /etc/selinux/config &> /dev/null && xecho "$good_prefix <biw>SELinux enabled successfully. {{ E-smile }}</biw>"
   elif [ "$SELinux" == "Disabled" ]; then
@@ -254,7 +271,7 @@ function rn_Users {
     for user in "${U_keys[@]}"; do
       userpass="${Users["$user [0]"]}"
       usersudo="${Users["$user [1]"]}"
-      test "$userpass" == "%Gen%" && userpass="$(gen_random all)"
+      test "$userpass" == "%Gen%" && userpass="$(printf '%q' "$(gen_random all)")"
       xecho "$info_prefix <biw>Creating user \"$user\" (sudo? $usersudo).</biw>"
       if [ $(cat /etc/passwd | grep "$user:" &> /dev/null;echo $?) -ne 0 ]; then
         run 0 "noinfo" "useradd \"$user\"" && xecho "$good_prefix <biw>Added user \"$user\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$user\".</biw>"
@@ -283,8 +300,6 @@ test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configurati
 yq_err="$(yq e . "$conf_file" 2>&1 > /dev/null)"
 test -z "$yq_err" || fail 1 "Configuration fail is invaild: <on_b><bir>$yq_err</bir></on_b>"
 keys=($(yq 'keys | .[]' <<< "$configuration" 2> /dev/null))
-
-# parse_yaml 2 Environment_Configuration content
 
 ## Refresh package index
 xecho "$info_prefix <biw>Refreshing local package index. {{ E-redo }}</biw>"
