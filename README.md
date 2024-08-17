@@ -16,6 +16,8 @@ It uses [YAML](https://en.wikipedia.org/wiki/YAML) for its configuration file, s
 > 
 > [![ReadMe Card](https://github-readme-stats.vercel.app/api/pin/?username=Noam-Alum&repo=utils.sh)](https://github.com/Noam-Alum/utils.sh)
 
+<br>
+
 ---
 
 ##  <img src="https://cdn.iconscout.com/icon/premium/png-256-thumb/install-1462529-1238097.png?f=webp&w=256" width="24" style="max-width: 100%;"> Installation:
