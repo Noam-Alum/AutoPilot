@@ -8,13 +8,13 @@ It uses [YAML](https://en.wikipedia.org/wiki/YAML) for its configuration file, s
 
 ![AutoPilotBanner](https://docs.alum.sh/images/AutoPilot-Logo.png)
 
-This script relies heavily on a collection of functions, `utils.sh`.
-
-https://github.com/Noam-Alum/AutoPilot/blob/8a05103fdd2deaaf2c534efd20c3c6fe5dbd2e04/AutoPilot.sh#L11-L13
-
-<br>
-
-[![ReadMe Card](https://github-readme-stats.vercel.app/api/pin/?username=Noam-Alum&repo=utils.sh)](https://github.com/Noam-Alum/utils.sh)
+> This script relies heavily on a collection of functions, `utils.sh`.
+> 
+> https://github.com/Noam-Alum/AutoPilot/blob/8a05103fdd2deaaf2c534efd20c3c6fe5dbd2e04/AutoPilot.sh#L11-L13
+> 
+> <br>
+> 
+> [![ReadMe Card](https://github-readme-stats.vercel.app/api/pin/?username=Noam-Alum&repo=utils.sh)](https://github.com/Noam-Alum/utils.sh)
 
 ---
 
