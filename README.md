@@ -14,7 +14,7 @@ https://github.com/Noam-Alum/AutoPilot/blob/8a05103fdd2deaaf2c534efd20c3c6fe5dbd
 
 <br>
 
-[!ReadMe Card](https://github.com/Noam-Alum/utils.sh)
+[![ReadMe Card](https://github-readme-stats.vercel.app/api/pin/?username=Noam-Alum&repo=utils.sh)](https://github.com/Noam-Alum/utils.sh)
 
 ---
 
