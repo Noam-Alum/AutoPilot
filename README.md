@@ -15,7 +15,7 @@ It uses [YAML](https://en.wikipedia.org/wiki/YAML) for its configuration file, s
 > 
 > <br>
 > 
-> [![ReadMe Card](https://github-readme-stats.vercel.app/api/pin/?username=Noam-Alum&repo=utils.sh)](https://github.com/Noam-Alum/utils.sh\&title_color=fff\&icon_color=f9f9f9\&text_color=9f9f9f\&bg_color=151515)
+> [![ReadMe Card](https://github-readme-stats.vercel.app/api/pin?username=Noam-Alum&repo=utils.sh&title_color=fff&icon_color=f9f9f9&text_color=9f9f9f&bg_color=151515)](https://github.com/Noam-Alum/utils.sh)
 
 <br>
 
