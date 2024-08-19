@@ -47,10 +47,12 @@ Plugins:
 Users:
   - name: noam
     pass: "%Gen%"
-    sudo: yes
+    group: sudo,noam
+    shell: /bin/bash
   - name: shay
     pass: "mL{3_Ajx04,,,.......||||||//3QZ"
-    sudo: no
+    group: shay
+    shell: /bin/sh
 
 # Network Configuration
 Network_Configuration:

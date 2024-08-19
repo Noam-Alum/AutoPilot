@@ -265,18 +265,31 @@ function rn_Plugins {
 }
 
 function rn_Users {
-  parse_yaml 3 Users name pass sudo
+  parse_yaml 4 Users name pass group shell
   if [ "${#Users[@]}" -ne 0 ]; then
-    U_keys=($(tr ' ' '\n' <<< "${!Users[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
+    U_keys=($(tr ' ' '\n' <<< "${!Users[@]}" | grep -Ev '\[(0|1|2)\]' | sort -u))
     for user in "${U_keys[@]}"; do
       userpass="${Users["$user [0]"]}"
-      usersudo="${Users["$user [1]"]}"
+      usergrp="${Users["$user [1]"]}"
+      usershell="${Users["$user [2]"]}"
       test "$userpass" == "%Gen%" && userpass="$(printf '%q' "$(gen_random all)")"
-      xecho "$info_prefix <biw>Creating user \"$user\" (sudo? $usersudo).</biw>"
+      xecho "$info_prefix <biw>Creating user \"$user\".</biw>"
       if [ $(cat /etc/passwd | grep "$user:" &> /dev/null;echo $?) -ne 0 ]; then
+
         run 0 "noinfo" "useradd \"$user\"" && xecho "$good_prefix <biw>Added user \"$user\".</biw>" || xecho "$error_prefix <biw>Could not add user \"$user\".</biw>"
-        test "$### Usersusersudo" == "yes" && run 0 "noinfo" "usermod -aG sudo \"$user\""
+
+        for u_grp in $(tr -s ',' ' ' <<< "$usergrp")
+        do
+          getent group $u_grp &> /dev/null && run 0 "noinfo" "usermod -aG $u_grp \"$user\"" && xecho "$good_prefix <biw>Added user \"$user\" to group named \"$u_grp\" successfully.</biw>" || xecho "$nogood_prefix <biw>Could not added user \"$user\" to group named \"$u_grp\".</biw>"
+        done
+
+        cat /etc/shells | grep -w "$usershell" &> /dev/null && run 0 "noinfo" "usermod --shell $usershell $user" && xecho "$good_prefix <biw>Changed user \"$user\" shell to $usershell</biw>" || xecho "$notgood_prefix <biw>Could not change user \"$user\" shell to $usershell {{ E-sad }}</biw>"
+
         run 0 "noinfo" "echo -e \"$userpass\n$userpass\" | passwd $user"
+        test -d "$(grep "$user:" /etc/passwd | awk -F: '{print $(NF-1)}')" || run 0 'noinfo' "mkdir -p /home/$user/"
+        run 0 "noinfo" "echo \"$userpass\" > /home/$user/.password" && xecho "$info_prefix <biw>Password for user \"$user\" has been stored at \"/home/$user/.password\", please copy it and store it in a safe place {{ E-music }}, then</biw> <bir>DELETE IT {{ E-angry }}</bir><biw>.</biw>"
+        run 0 "noinfo" "chown $user.$user /home/$user/.password"
+        run 0 "noinfo" "chmod 600 /home/$user/.password"
       else
       xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
       fi
