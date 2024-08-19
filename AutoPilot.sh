@@ -280,7 +280,7 @@ function rn_Users {
 
         for u_grp in $(tr -s ',' ' ' <<< "$usergrp")
         do
-          getent group $u_grp &> /dev/null && run 0 "noinfo" "usermod -aG $u_grp \"$user\"" && xecho "$good_prefix <biw>Added user \"$user\" to group named \"$u_grp\" successfully.</biw>" || xecho "$nogood_prefix <biw>Could not added user \"$user\" to group named \"$u_grp\".</biw>"
+          getent group $u_grp &> /dev/null && run 0 "noinfo" "usermod -aG $u_grp \"$user\"" && xecho "$good_prefix <biw>Added user \"$user\" to group named \"$u_grp\" successfully.</biw>" || xecho "$notgood_prefix <biw>Could not added user \"$user\" to group named \"$u_grp\".</biw>"
         done
 
         cat /etc/shells | grep -w "$usershell" &> /dev/null && run 0 "noinfo" "usermod --shell $usershell $user" && xecho "$good_prefix <biw>Changed user \"$user\" shell to $usershell</biw>" || xecho "$notgood_prefix <biw>Could not change user \"$user\" shell to $usershell {{ E-sad }}</biw>"
