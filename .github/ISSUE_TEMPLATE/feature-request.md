@@ -2,7 +2,7 @@
 name: Feature request
 about: Describe this issue template's purpose here.
 title: Feature request | [feature request short description]
-labels: new feature
+labels: feature request
 assignees: Noam-Alum
 
 ---

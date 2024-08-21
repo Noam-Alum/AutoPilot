@@ -12,7 +12,6 @@ assignees: Noam-Alum
 Long issue description.
 
 **For example:**
-```markdown
 
 I found an issue with the `Network_Configuration` directive while using the following configuration:
 ```yaml
@@ -29,7 +28,6 @@ Network_Configuration:
 2. Step 2
 3. Step 3
 4. etc...
-```
 
 ---
 
