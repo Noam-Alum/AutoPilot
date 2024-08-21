@@ -94,7 +94,13 @@ Network_Configuration:
 > 
 > [![Button Component](https://readme-components.vercel.app/api?component=button&text=Documentation)](https://docs.alum.sh/AutoPilot/Introduction.html)
 
-<br>
+## <img src="https://www.freeiconspng.com/thumbs/helping-hand-icon-png/helping-hand-icon-png-25.png" width="26" style="max-width: 100%;"> Contribute
+
+Any contribution would be greatly appreciated, refer to this page for detailed guides on how to contribute.
+
+[![Button Component](https://readme-components.vercel.app/api?component=button&text=Contribute)](CONTRIBUTE.md)
+
+<hr>
 
 > [!NOTE]
 > **If you want to request a new feature, you can do that [here](https://github.com/Noam-Alum/AutoPilot/issues/new?assignees=Noam-Alum&labels=feature+request&projects=&template=feature-request.md&title=Feature+request+%7C+%5Bfeature+request+short+description%5D).**
