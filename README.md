@@ -97,4 +97,4 @@ Network_Configuration:
 <br>
 
 > [!NOTE]
-> **If you want to request a new feature, please create an issue [here](https://github.com/Noam-Alum/AutoPilot/issues).**
+> **If you want to request a new feature, you can do that [here](https://github.com/Noam-Alum/AutoPilot/issues/new?assignees=Noam-Alum&labels=feature+request&projects=&template=feature-request.md&title=Feature+request+%7C+%5Bfeature+request+short+description%5D).**
