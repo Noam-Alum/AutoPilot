@@ -9,7 +9,7 @@
 # | Description: This script automates the setup of a new system with essential configurations.
 #
 
-source <(curl -Ls "https://raw.githubusercontent.com/Noam-Alum/utils.sh/main/utils.sh")
+source <(curl -Ls "https://raw.githubusercontent.com/Noam-Alum/utils.sh/main/utils-min.sh")
 
 # Style
 ## Prefixes
@@ -133,6 +133,26 @@ function rn_Environment_configuration {
         run 0 'noinfo' 'eval echo $env_config >> /home/$env_user/.bashrc' && xecho "$good_prefix <biw>Added environment configuration successfully.</biw><big>{{ E-success }}</big>" || xecho "$error_prefix <biw>Failed to add environment configuration. {{ E-nervous }}</biw>"
       else
         xecho "$notgood_prefix <biw>User does not exist! could not add environment configuration. {{ E-angry }}</biw>"
+      fi
+    done
+  fi
+}
+
+function rn_Cronjobs {
+  parse_yaml 2 Cronjobs user rules
+  if [ "${#Cronjobs[@]}" -ne 0 ]; then
+    for c_user in ${!Cronjobs[@]}
+    do
+      xecho "$info_prefix <biw>Trying to add cronjob rules to user \"$c_user\".</biw>"
+      if [ $(cat /etc/passwd | grep "$c_user:" &> /dev/null;echo $?) -eq 0 ]; then
+        c_rules_file="/tmp/$c_user-cron-$(gen_random str)-tmp"
+        printf -v c_rules '%q' "${Cronjobs[$c_user]}"
+        crontab -u noam -l > $c_rules_file 2> /dev/null
+        run 0 'noinfo' 'eval echo "$c_rules" >> $c_rules_file'
+        run 0 'noinfo' 'eval crontab -u "$c_user" "$c_rules_file"' && xecho "$good_prefix <biw>Added cronjob rules successfully.</biw><big>{{ E-success }}</big>" || xecho "$error_prefix <biw>Failed to add cronjob rules. {{ E-nervous }}</biw>"
+        run 0 'noinfo' 'rm -rf $c_rules_file'
+      else
+        xecho "$notgood_prefix <biw>User does not exist! could not add cronjob rules. {{ E-angry }}</biw>"
       fi
     done
   fi
