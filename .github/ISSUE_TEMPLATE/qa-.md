@@ -2,7 +2,7 @@
 name: 'QA '
 about: QA issue template.
 title: QA | [Short issue description]
-labels: bug, enhancement
+labels: QA
 assignees: Noam-Alum
 
 ---
