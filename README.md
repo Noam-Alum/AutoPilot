@@ -100,7 +100,7 @@ Network_Configuration:
 
 ## <img src="https://www.freeiconspng.com/thumbs/helping-hand-icon-png/helping-hand-icon-png-25.png" width="26" style="max-width: 100%;"> Contribute
 
-Any contribution would be greatly appreciated, refer to [this page](https://readme-components.vercel.app/api?component=button&text=Contribute) for detailed guides on how to contribute.
+Any contribution would be greatly appreciated, refer to [this page](CONTRIBUTING.md) for detailed guides on how to contribute.
 
 <br>
 
