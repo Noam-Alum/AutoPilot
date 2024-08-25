@@ -5,6 +5,7 @@
 **You can follow these guides on the AutoPilot documentation:**
 
 - [QA - Quality Assurance](https://docs.alum.sh/AutoPilot/contribute/QA.html)
+- [Contribute to documentation](https://docs.alum.sh/AutoPilot/contribute/docs.html)
 
 <br>
 
