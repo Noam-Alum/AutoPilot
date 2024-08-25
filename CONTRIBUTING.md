@@ -6,6 +6,7 @@
 
 - [QA - Quality Assurance](https://docs.alum.sh/AutoPilot/contribute/QA.html)
 - [Contribute to documentation](https://docs.alum.sh/AutoPilot/contribute/docs.html)
+- [Contribute to AutoPilot script](https://docs.alum.sh/AutoPilot/contribute/script.html)
 
 <br>
 
