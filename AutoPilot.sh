@@ -10,6 +10,7 @@
 #
 
 source <(curl -Ls "https://raw.githubusercontent.com/Noam-Alum/utils.sh/main/utils-min.sh")
+test -e '/etc/profile' && source '/etc/profile'
 
 # Style
 ## Prefixes
@@ -117,6 +118,23 @@ function parse_yaml {
         eval $yaml_1["$item [2]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_6" <<< "$configuration" 2> /dev/null)")"
   	  done
       ;;
+    5)
+      local yaml_2="$3"
+      local yaml_3=($(yq -o=tsv ".$yaml_1[] | \"\(.$yaml_2)\"" <<< "$configuration" 2> /dev/null))
+      local yaml_4="$4"
+      local yaml_5="$5"
+      local yaml_6="$6"
+      local yaml_7="$7"
+      declare -gA "$yaml_1"
+  	  for item in "${yaml_3[@]}"
+  	  do
+        eval $yaml_1["$item [0]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_4" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [1]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_5" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [2]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_6" <<< "$configuration" 2> /dev/null)")"
+        eval $yaml_1["$item [3]"]="$(printf '%q' "$(yq eval ".$yaml_1[] | select(.$yaml_2 == \"$item\") | .$yaml_7" <<< "$configuration" 2> /dev/null)")"
+  	  done
+      ;;
+
   esac
 }
 
@@ -313,6 +331,51 @@ function rn_Users {
       else
       xecho "$notgood_prefix <biw>User exists alredy {{ E-angry }} {{ BR-scissors }} skipping.</biw>"
       fi
+    done
+  fi
+}
+
+# Does not work!
+function rn_Power_Management {
+  parse_yaml 5 Power_Management User Screen_Blanking_Timeout Suspend_on_Lid_Close Automatic_Suspend_AC Automatic_Suspend_B
+  if [ "${#Power_Management[@]}" -ne 0 ]; then
+    PM_keys=($(tr ' ' '\n' <<< "${!Power_Management[@]}" | grep -Ev '\[(0|1|2|3)\]' | sort -u))
+    for pm_user in "${PM_keys[@]}"; do
+
+
+      # I cant capture the Desktop Environment as the script runs as sudo and not in a Graphical environment so the variables are not set.
+      su -c 'for DE in "$DESKTOP_SESSION" "$XDG_SESSION_DESKTOP" "$GDMSESSION" "$WINDOWMANAGER"; do echo "$DE"; done' $pm_user
+      sudo -u $pm_user env DESKTOP_SESSION="$DESKTOP_SESSION" XDG_SESSION_DESKTOP="$XDG_SESSION_DESKTOP" GDMSESSION="$GDMSESSION" WINDOWMANAGER="$WINDOWMANAGER" bash -c 'for DE in "$DESKTOP_SESSION" "$XDG_SESSION_DESKTOP" "$GDMSESSION" "$WINDOWMANAGER"; do echo "$DE"; done'
+      System_Desktop_Env="$(sudo -u $pm_user env DESKTOP_SESSION="$DESKTOP_SESSION" XDG_SESSION_DESKTOP="$XDG_SESSION_DESKTOP" GDMSESSION="$GDMSESSION" WINDOWMANAGER="$WINDOWMANAGER" bash -c 'for DE in "$DESKTOP_SESSION" "$XDG_SESSION_DESKTOP" "$GDMSESSION" "$WINDOWMANAGER"; do echo "$DE"; done' | awk {'print $NF'} | sort -u | tr -d '[:space:]')"
+
+
+      [[ "$System_Desktop_Env" =~ ^(ubuntu|ubuntu-xorg|gnome|gnome-classic|gnome-wayland|gnome-xorg|fedora|debian|arch|manjaro-gnome|pop)$ ]] && System_Desktop_Env="Gnome"
+      [[ "$System_Desktop_Env" =~ ^(plasma|kde|kubuntu|neon|arch-plasma|opensuse-plasma|fedora-kde|manjaro-kde)$ ]] && System_Desktop_Env="KDE"
+      [[ "$System_Desktop_Env" =~ ^(xfce|xubuntu|xfce4|arch-xfce|manjaro-xfce|fedora-xfce|debian-xfce|mx-xfce|xubuntu-xfce)$ ]] && System_Desktop_Env="Xfce"
+      [[ "$System_Desktop_Env" =~ ^(lxqt|lubuntu|arch-lxqt|manjaro-lxqt|fedora-lxqt|opensuse-lxqt)$ ]] && System_Desktop_Env="LXQt"
+      [[ "$System_Desktop_Env" =~ ^(cinnamon|arch-cinnamon|fedora-cinnamon|linuxmint|manjaro-cinnamon|debian-cinnamon)$ ]] && System_Desktop_Env="Cinnamon"
+      Screen_Blanking_Timeout="${Power_Management["$pm_user [0]"]}"
+      Suspend_on_Lid_Close="${Power_Management["$pm_user [1]"]}"
+      Automatic_Suspend_AC="${Power_Management["$pm_user [2]"]}"
+      Automatic_Suspend_B="${Power_Management["$pm_user [3]"]}"
+
+      case $System_Desktop_Env in
+        Gnome)
+          echo "Gnome: $Screen_Blanking_Timeout $Suspend_on_Lid_Close $Automatic_Suspend_AC $Automatic_Suspend_B"
+          ;;
+        KDE)
+          echo "KDE: $Screen_Blanking_Timeout $Suspend_on_Lid_Close $Automatic_Suspend_AC $Automatic_Suspend_B"
+          ;;
+        Xfce)
+          echo "Xfce: $Screen_Blanking_Timeout $Suspend_on_Lid_Close $Automatic_Suspend_AC $Automatic_Suspend_B"
+          ;;
+        LXQt)
+          echo "LXQt: $Screen_Blanking_Timeout $Suspend_on_Lid_Close $Automatic_Suspend_AC $Automatic_Suspend_B"
+          ;;
+        Cinnamon)
+          echo "Cinnamon: $Screen_Blanking_Timeout $Suspend_on_Lid_Close $Automatic_Suspend_AC $Automatic_Suspend_B"
+          ;;
+      esac
     done
   fi
 }
