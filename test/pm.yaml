@@ -5,3 +5,8 @@ Power_Management:
     Suspend_on_Lid_Close: true
     Automatic_Suspend_AC: 0
     Automatic_Suspend_B: 650
+  - User: shay
+    Screen_Blanking_Timeout: 560
+    Suspend_on_Lid_Close: true
+    Automatic_Suspend_AC: 0
+    Automatic_Suspend_B: 650
