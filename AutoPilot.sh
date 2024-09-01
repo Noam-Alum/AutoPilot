@@ -331,11 +331,13 @@ function rn_Repo {
         run 0 'noinfo' "echo \"$repo_config\" > /etc/apt/sources.list.d/$repo.list" &&\
         xecho "$good_prefix <biw>Added repo to sources list at</biw> <on_b><biw>/etc/apt/sources.list.d/$repo.list</biw></on_b> <biw>successfully!</biw>" ||\
         xecho "$notgood_prefix <biw>Could not add repo to sources list. {{ E-sad }}</biw>"
-      test -d '/etc/apt/trusted.gpg.d/' ||\
-        xecho "$error_prefix <biw>Directory</biw> <on_b><biw>/etc/apt/trusted.gpg.d/</biw></on_b> <biw>does not exists, cant add repo. {{ E-sad }}</biw>" &&\
-        run 0 'noinfo' "curl -s $repo_key 2> /dev/null | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/$repo.gpg" &&\
-        xecho "$good_prefix <biw>Added gpg key successfully!</biw>" ||\
-        xecho "$notgood_prefix <biw>Could not add gpg key.</biw>"
+      if [ "$repo_key" != "%NoKey%" ]; then
+        test -d '/etc/apt/trusted.gpg.d/' ||\
+          xecho "$error_prefix <biw>Directory</biw> <on_b><biw>/etc/apt/trusted.gpg.d/</biw></on_b> <biw>does not exists, cant add repo. {{ E-sad }}</biw>" &&\
+          run 0 'noinfo' "curl -s $repo_key 2> /dev/null | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/$repo.gpg" &&\
+          xecho "$good_prefix <biw>Added gpg key successfully!</biw>" ||\
+          xecho "$notgood_prefix <biw>Could not add gpg key.</biw>"
+      fi
     done
     xecho "$info_prefix <biw>Updating the local package index. {{ E-redo }}</biw>"
     run 0 'noinfo' 'apt-get update'
