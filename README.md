@@ -3,10 +3,12 @@
 [![made-with-utils.sh](https://img.shields.io/badge/Made%20with-utils.sh-blue?style=plastic&labelColor=%237b7b7b&color=%23003972)](https://github.com/Noam-Alum/utils.sh)
 ![version](https://img.shields.io/badge/Version-1.0.0-blue?style=plastic&labelColor=%2390ee90&color=%23003972)
 
-**AutoPilot** is a free to use [bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) script written by [Noam Alum](https://www.linkedin.com/in/noam-alum/) meant to automate the process of setting up a new system.<br>
+**AutoPilot** is a free to use [bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) script (for both **Debian** and **RHEL** related operating systems) written by [Noam Alum](https://www.linkedin.com/in/noam-alum/) meant to automate the process of setting up a new system.<br>
 It uses [YAML](https://en.wikipedia.org/wiki/YAML) for its configuration file, so it is very easy to set up, and you can create numerous configuration files for different occasions. (I like to call them *"Profiles"* 🙃)
 
 ![AutoPilotBanner](https://docs.alum.sh/images/AutoPilot-Logo.png)
+
+![Support](https://docs.alum.sh/images/AutoPilot-Support-for-RHEL-and-Debian.png)
 
 > [!NOTE]
 > This script relies heavily on a collection of functions, `utils.sh`.
