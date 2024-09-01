@@ -344,6 +344,16 @@ function rn_Repo {
   fi
 }
 
+function rn_Time {
+  parse_yaml 0 Time
+  xecho "$info_prefix <biw>Trying to change time zone to \"$Time\".</biw>"
+  if [ "$(timedatectl list-timezones | grep -w "$Time" &> /dev/null;echo $?)" -eq 0 ]; then
+    run 0 'noinfo' "timedatectl set-timezone $Time" && xecho "$good_prefix <biw>Changed time to $Time.</biw>" || xecho "$notgood_prefix <biw>Could not change time to $Time.</biw>"
+  else
+    xecho "$error_prefix <biw>Time zone \"$Time\" does not exist.</biw> <bir>{{ E-angry }}</bir>"
+  fi
+}
+
 # Main
 xecho "$banner"
 
