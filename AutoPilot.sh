@@ -4,7 +4,7 @@
 #
 # | Author: Noam Alum
 # | Created: July 30, 2024
-# | Last modified: Thu Aug 15, 2024
+# | Last modified: September 1, 2024
 # | Version: 1.0
 # | Description: This script automates the setup of a new system with essential configurations.
 #
