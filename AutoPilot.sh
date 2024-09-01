@@ -317,6 +317,31 @@ function rn_Users {
   fi
 }
 
+function rn_Repo {
+  parse_yaml 3 Repo name configuration key
+  if [ "${#Repo[@]}" -ne 0 ]; then
+    REPO_keys=($(tr ' ' '\n' <<< "${!Repo[@]}" | grep -Ev '\[(0|1)\]' | sort -u))
+    for repo in "${REPO_keys[@]}"
+    do
+      repo_config="${Repo["$repo [0]"]}"
+      repo_key="${Repo["$repo [1]"]}"
+      xecho "$info_prefix <biw>Trying to add repo named {{ E-gun }} \"$repo\" to sources list.</biw>"
+      test -d '/etc/apt/sources.list.d/' ||\
+        xecho "$error_prefix <biw>Directory</biw> <on_b><biw>/etc/apt/sources.list.d/</biw></on_b> <biw>does not exists, cant add repo. {{ E-sad }}</biw>" &&\
+        run 0 'noinfo' "echo \"$repo_config\" > /etc/apt/sources.list.d/$repo.list" &&\
+        xecho "$good_prefix <biw>Added repo to sources list at</biw> <on_b><biw>/etc/apt/sources.list.d/$repo.list</biw></on_b> <biw>successfully!</biw>" ||\
+        xecho "$notgood_prefix <biw>Could not add repo to sources list. {{ E-sad }}</biw>"
+      test -d '/etc/apt/trusted.gpg.d/' ||\
+        xecho "$error_prefix <biw>Directory</biw> <on_b><biw>/etc/apt/trusted.gpg.d/</biw></on_b> <biw>does not exists, cant add repo. {{ E-sad }}</biw>" &&\
+        run 0 'noinfo' "curl -s $repo_key 2> /dev/null | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/$repo.gpg" &&\
+        xecho "$good_prefix <biw>Added gpg key successfully!</biw>" ||\
+        xecho "$notgood_prefix <biw>Could not add gpg key.</biw>"
+    done
+    xecho "$info_prefix <biw>Updating the local package index. {{ E-redo }}</biw>"
+    run 0 'noinfo' 'apt-get update'
+  fi
+}
+
 # Main
 xecho "$banner"
 
@@ -329,7 +354,7 @@ check_dependencies "yq" "$notgood_prefix <biw>Dependency missing, trying to inst
 ## Get conf file
 conf_file="$1"
 test -z "$conf_file" && user_input conf_file "txt" "$info_prefix <biw>What configuration file would you like to use? : </biw>"
-test -e "$conf_file" && configuration="$(cat $conf_file)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
+test -e "$conf_file" && configuration="$(cat $conf_file 2> /dev/null)" || fail 1 "Configuration file \"$conf_file\" not found, exiting."
 yq_err="$(yq e . "$conf_file" 2>&1 > /dev/null)"
 test -z "$yq_err" || fail 1 "Configuration fail is invaild: <on_b><bir>$yq_err</bir></on_b>"
 keys=($(yq 'keys | .[]' <<< "$configuration" 2> /dev/null))
@@ -344,4 +369,4 @@ do
   rn_$key
 done
 
-xecho "$info_prefix <biw>Done. {{ E-smile }}</biw>"
+xecho "$good_prefix <biw>Done. {{ E-smile }}</biw>"

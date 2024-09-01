@@ -37,7 +37,7 @@ It uses [YAML](https://en.wikipedia.org/wiki/YAML) for its configuration file, s
 ## <img src="https://cdn-icons-png.flaticon.com/512/5486/5486152.png" width="26" style="max-width: 100%;"> Usage:
 
 > [!WARNING]
-> To use the script you first need to conduct a configuration file.
+> To use the script you first need to conduct a configuration file, instructions for this are available [here](https://docs.alum.sh/AutoPilot/HowTo/Create-a-configuration-file.html).
 
 ```sh
 sudo ./AutoPilot.sh configuration.yaml
