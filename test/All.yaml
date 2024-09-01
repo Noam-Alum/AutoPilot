@@ -1,0 +1,60 @@
+# All directives
+SELinux: Enabled
+
+Users:
+  - name: noam
+    pass: 1234
+    group: Noam,sudo,admins
+    shell: /bin/bash
+  - name: shay
+    pass: "%Gen%"
+    group: Shay,helpdesk
+    shell: /bin/sh
+
+Run_Lines:
+  - echo "Hello"
+  - echo "Hey"
+
+Installed_packages:
+  - name: FireJail
+    type: Deb
+    source: firejail
+  - name: Discord
+    type: Pkg
+    source: https://discord.com/api/download?platform=linux&format=deb
+  - name: NVIM
+    type: Sh
+    source: https://installnvim.com/install.sh
+
+Plugins:
+  - name: make_backup
+    script: plugins/make_backup/run.sh
+
+Cronjobs:
+  - user: noam
+    rules: |
+      * * * * * echo "$(date)" >> /home/noam-cron.txt
+      * * * * * echo "sent date" >> /home/noam-cron.txt
+  - user: shay
+    rules: |
+      * * * * * echo "$(date)" >> /home/shay-cron.txt
+
+Repo:
+  - name: spotify
+    configuration: "deb http://repository.spotify.com  stable  non-free"
+    key: "https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gp"
+  - name: Google
+    configuration: "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
+    key: "%NoKey%"
+
+Time: Asia/Jerusalem
+
+Network_Configuration:
+  - nic: tun0
+    ip: 192.168.2.14/24
+    gateway: 192.168.2.1
+    dns: 8.8.8.8,8.4.8.4
+  - nic: eth0
+    ip: "%DHCP%"
+    gateway: "%DHCP%"
+    dns: "%DHCP%"

@@ -54,7 +54,7 @@ SELinux: Disabled
 
 Installed_packages:
   - name: FireJail
-    type: Deb
+    type: Pm
     source: firejail
   - name: Discord
     type: Pkg
@@ -66,7 +66,7 @@ Installed_packages:
     type: Pkg
     source: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
   - name: git
-    type: Deb
+    type: Pm
     source: git
 
 Run_Lines:
