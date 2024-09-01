@@ -6,9 +6,10 @@
 **AutoPilot** is a free to use [bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) script (for both **Debian** and **RHEL** related operating systems) written by [Noam Alum](https://www.linkedin.com/in/noam-alum/) meant to automate the process of setting up a new system.<br>
 It uses [YAML](https://en.wikipedia.org/wiki/YAML) for its configuration file, so it is very easy to set up, and you can create numerous configuration files for different occasions. (I like to call them *"Profiles"* 🙃)
 
-![AutoPilotBanner](https://docs.alum.sh/images/AutoPilot-Logo.png)
+> [!NOTE]
+> Supports **Debian** and **RHEL** related systems! 💪
 
-![Support](https://docs.alum.sh/images/AutoPilot-Support-for-RHEL-and-Debian.png)
+![AutoPilotBanner](https://docs.alum.sh/images/AutoPilot-Logo.png)
 
 > [!NOTE]
 > This script relies heavily on a collection of functions, `utils.sh`.
