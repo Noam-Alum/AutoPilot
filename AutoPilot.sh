@@ -7,6 +7,7 @@
 # | Last modified: September 1, 2024
 # | Version: 1.0
 # | Description: This script automates the setup of a new system with essential configurations.
+# | Documentation: https://docs.alum.sh/AutoPilot/Introduction.html
 #
 
 source <(curl -Ls "https://raw.githubusercontent.com/Noam-Alum/utils.sh/main/utils-min.sh")
