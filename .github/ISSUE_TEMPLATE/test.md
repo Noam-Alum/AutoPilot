@@ -1,8 +1,11 @@
+---
 name: Bug Report
 description: File a bug/issue in this part of the project
 title: "[BUG] <title>"
 labels: ["bug", "needs-triage"]
 about: Test
+---
+
 body:
   - type: checkboxes
     attributes:
