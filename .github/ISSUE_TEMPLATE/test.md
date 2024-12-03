@@ -1,11 +1,9 @@
 ---
-name: Bug Report
+name: Test
 description: File a bug/issue in this part of the project
 title: "[BUG] <title>"
 labels: ["bug", "needs-triage"]
 about: Test
----
-
 body:
   - type: checkboxes
     attributes:
@@ -46,3 +44,4 @@ body:
         Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in.
     validations:
       required: false
+---
